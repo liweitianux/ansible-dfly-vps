@@ -1,0 +1,59 @@
+---
+- debug: var=ansible_play_hosts
+- debug: var=deploy_user
+- debug: var=ansible_ssh_host
+- debug: var=ansible_ssh_port
+- debug: var=ansible_ssh_private_key_file
+
+- name: User - create deployment user account (group)
+  command: pw groupadd "{{ deploy_user }}" -g 999
+  ignore_errors: true
+
+- name: User - create deployment user account (user)
+  command: >
+    pw useradd "{{ deploy_user }}"
+    -u 999 -g "{{ deploy_user }}"
+    -m -d "/var/{{ deploy_user }}"
+    -C "Ansible Deployment"
+  ignore_errors: true
+
+- name: SSH - authorized_keys for the deployment user
+  authorized_key:
+    user: "{{ deploy_user }}"
+    state: present
+    key: "{{ lookup('file', item+'.pub') }}"
+  with_items:
+    - "{{ ansible_ssh_private_key_file }}"
+
+- name: sudo - no password for the deployment user
+  template:
+    src: sudoers.d_ansible.j2
+    dest: /usr/local/etc/sudoers.d/ansible
+    mode: 0440
+    validate: "visudo -cf %s"
+
+- name: SSH - disable password auth for the deployment user
+  blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      Match User {{ deploy_user }}
+          PasswordAuthentication no
+    backup: true
+    validate: "sshd -t -f %s"
+  notify: restart-sshd
+
+- name: SSH - disable empty password login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitEmptyPasswords"
+    line: "PermitEmptyPasswords no"
+    validate: "sshd -t -f %s"
+  notify: restart-sshd
+
+- name: SSH - disable root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    validate: "sshd -t -f %s"
+  notify: restart-sshd

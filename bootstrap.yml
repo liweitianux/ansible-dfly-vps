@@ -1,0 +1,16 @@
+---
+# To override the bootstrapping host:
+#   $ ansible-playbook bootstrap.yml --extra-vars "host=<host>"
+#
+- name: Bootstrap hosts for Ansible deployment :-)
+  hosts: "{{ host | default('all') }}"
+  user: root
+  gather_facts: false
+
+  vars:
+    deploy_user: ansible
+
+  roles:
+    - bootstrap
+
+# vim: set ft=yaml sw=2: #
