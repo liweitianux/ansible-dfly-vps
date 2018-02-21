@@ -1,0 +1,148 @@
+#
+# /usr/local/etc/nsd/nsd.conf
+# See nsd.conf(5)
+#
+# References
+# ----------
+# * NSD DNS Server Tutorial
+#   https://calomel.org/nsd_dns.html
+# * Host Your own DNS, without Sacrificing Reliability
+#   https://blog.tom-fitzhenry.me.uk/2012/12/host-your-own-dns-without-sacrificing-reliability.html
+# * Stealth (a.k.a. DMZ or Hidden Master) Name Server
+#   http://www.zytrax.com/books/dns/ch4/#stealth
+# * Free Secondary/slave DNS services
+#   http://www.frankb.us/dns/
+# * Free Secondary (slave) DNS
+#   https://bornoe.org/blog/2015/10/free-secondary-slave-dns/
+#
+#
+# Aaron LI
+#
+
+# NOTE:
+# Authoritative master server in *stealth* mode, i.e., hidden master.
+#
+# Due to the importance of the DNS, many registrars require that at least 2
+# name servers are provided from different machines or even from different
+# countries.  Maybe you could create another glue record with the same IP
+# address to fool the registrar, but some registrars may further check the
+# IP addresses.  Nevertheless, it is highly unrecommended to host your own
+# DNS on single machine, and secondary/slave DNS services should be used.
+# One can even configure a hidden master DNS with several slaves, which
+# can greatly reduce the traffic to the (small) master DNS, since only the
+# configured slaves have access to it, and the better security (avoid DDoS).
+
+server:
+    # Specify the interfaces to bind.
+    # Default are the wildcard interfaces 0.0.0.0 and ::0).
+    ip-address: {{ network.ipv4.address }}
+    ip-address: {{ network.ipv6.address }}
+
+    # Use the reuseport socket option for performance.
+    # Default: no.
+    reuseport: yes
+
+    # Listen on IPv4 connections
+    do-ip4: yes
+
+    # Listen on IPv6 connections
+    do-ip6: yes
+
+    # The file used to store the compiled zone information.
+    # If set to "" then no disk-database is used, less memory used
+    # but zone updates are not (immediately) spooled to disk.
+    #database: "/var/db/nsd/nsd.db"
+    database: ""
+
+    # The directory for "zonefile" files.  The daemon chdirs here.
+    #zonesdir: "/usr/local/etc/nsd"
+
+    # The list of dynamically added zones.
+    #zonelistfile: "/var/db/nsd/zone.list"
+
+    # Don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
+    hide-version: yes
+
+    # Identify the server (CH TXT ID.SERVER entry)
+    identity: ""
+
+    # Statistics are produced every number of seconds. Prints to log.
+    # Default is 0, meaning no statistics are produced.
+    # NOTE: requires BIND 8 statistics, which is disabled in the package
+    #statistics: 7200
+
+    # Verbosity level (0, 1, 2).
+    # Level 0 will print warnings and errors, and other events that are
+    # important to keep NSD running.
+    verbosity: 0
+
+    # Log messages to file.  Default to stderr and syslog (with
+    # facility LOG_DAEMON).  stderr disappears when daemon goes to bg.
+    #logfile: "/var/log/nsd.log"
+
+
+# Remote control config section.
+#
+remote-control:
+    # Enable remote control with nsd-control(8) here.
+    control-enable: yes
+
+    # Interfaces listened to for control.  Default is on localhost.
+    control-interface: 127.0.0.1
+    control-interface: ::1
+
+    # Server and nsd-control key and certificate files for remote control.
+    # Set up the keys and certificates with nsd-control-setup.
+    server-key-file: "/usr/local/etc/nsd/nsd_server.key"
+    server-cert-file: "/usr/local/etc/nsd/nsd_server.pem"
+    control-key-file: "/usr/local/etc/nsd/nsd_control.key"
+    control-cert-file: "/usr/local/etc/nsd/nsd_control.pem"
+
+
+# Secret keys for TSIGs that secure zone transfers.
+# You could include: "secret.keys" and put the "key:" statements there,
+# and give that file special access control permissions.
+#
+key:
+    # The key name is used to refer to this key in the access control list,
+    # and must be correct for TSIG to work.
+    name: "{{ nsd.key_name }}"
+
+    # The base64-encoded shared secret.
+    # e.g.: dd if=/dev/random bs=32 count=1 | openssl base64
+    secret: "{{ nsd.key_secret }}"
+
+
+# Patterns have zone configuration that are shared by one or more zones.
+#
+pattern:
+    # Name by which the pattern is referred to
+    name: "stealth_zones"
+
+    # The zonefile for the zones that use this pattern.
+    # If relative then from the zonesdir (inside the chroot).
+    # the name is processed: %s - zone name (as appears in zone:name).
+    zonefile: "zones/%s.zone"
+
+    # Use "%s" to use the name of the zone to track its statistics from
+    # nsd-control stats and stats_noreset.
+    zonestats: "%s"
+
+    # Notify these slaves when the master zone changes
+    notify: 174.37.196.55   NOKEY  # freedns.afraid.org
+    notify: 93.95.224.6     NOKEY  # 1984hosting.com
+
+    # Allow these IPs and TSIG to transfer zones.
+    provide-xfr: 174.37.196.55  NOKEY  # freedns.afraid.org
+    provide-xfr: 93.95.224.6    NOKEY  # 1984hosting.com
+
+
+# Fixed zone entries.  Here you can config zones that cannot be deleted.
+# Zones that are dynamically added and deleted are put in the zonelist file.
+#
+{% for zone in nsd.zones %}
+zone:
+    name: "{{ zone }}"
+    include-pattern: "stealth_zones"
+
+{% endfor %}

@@ -3,10 +3,30 @@ ansible_ssh_host: vultr.liwt.net
 ansible_ssh_port: 8864
 ansible_python_interpreter: /usr/local/bin/python2.7
 
+network:
+  interface: vtnet0
+  ipv4:
+    address: 45.77.201.74
+    netmask: 255.255.254.0
+    gateway: 45.77.200.1
+  ipv6:
+    address: 2001:19f0:5:3166::c0f:fee
+    prefixlen: 64
+
 shadowsocks:
   server_port: 8989
   password: "???"
   method: "chacha20-ietf-poly1305"
   nameserver: "8.8.8.8"
+
+nsd:
+  # Secret key for TSIGs that secure zone transfers.
+  key_name: nsdkey
+  # Generate by e.g.: dd if=/dev/random bs=32 count=1 | openssl base64
+  key_secret: cuE2ZtReggzlaVzCmD0VWAnZp494x0KnPG4pSTU63LE=
+  # Domains/zones
+  zones:
+    - 233233.xyz
+    - 1314233.xyz
 
 # vim: set ft=yaml sw=2: #

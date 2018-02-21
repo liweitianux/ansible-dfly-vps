@@ -1,0 +1,6 @@
+---
+- name: restart-unbound
+  command: rcrestart unbound
+
+- name: restart-nsd
+  command: rcrestart nsd

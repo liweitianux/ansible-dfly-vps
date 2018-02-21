@@ -1,0 +1,21 @@
+$ORIGIN 1314233.xyz.
+$TTL 1h
+
+@           IN  SOA     ns.1314233.xyz.  admin.1314233.xyz.  (
+                        2018022120  ; serial number
+                        1d          ; refresh
+                        2h          ; retry
+                        4w          ; expire
+                        1h          ; minimum TTL
+                        )
+
+@           IN  NS      ns2.afraid.org.
+
+@           IN  A       {{ network.ipv4.address }}
+@           IN  AAAA    {{ network.ipv6.address }}
+
+www         IN  CNAME   www.233233.xyz.
+g           IN  CNAME   g.233233.xyz.
+zw          IN  CNAME   zw.233233.xyz.
+
+; vim: set ft=bindzone :

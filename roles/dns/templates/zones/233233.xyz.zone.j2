@@ -1,0 +1,38 @@
+$ORIGIN 233233.xyz.
+$TTL 1h
+
+; WARNING:
+; A CNAME record is NOT allowed to coexist with *any other* data!
+; Therefore one can't have a CNAME Record at the zone root, because
+; the zone root must have two mandatory records: SOA and NS.
+;
+; According to the specification: if a CNAME RR is present at a node,
+; no other data should be present; this ensures that the data for a
+; canonical name and its aliases cannot be different.  This rule also
+; insures that a cached CNAME can be used without checking with an
+; authoritative server for other RR types.
+
+@           IN  SOA     ns.233233.xyz.  admin.233233.xyz.  (
+                        2018022123  ; serial number
+                        1d          ; refresh
+                        2h          ; retry
+                        4w          ; expire
+                        1h          ; minimum TTL
+                        )
+
+@           IN  NS      ns2.afraid.org.
+
+;@           IN  MX  10  mail.233233.xyz.
+
+@           IN  A       {{ network.ipv4.address }}
+@           IN  AAAA    {{ network.ipv6.address }}
+;mail        IN  A       {{ network.ipv4.address }}
+;mail        IN  AAAA    {{ network.ipv6.address }}
+
+www         IN  CNAME   @
+g           IN  CNAME   @
+zw          IN  CNAME   @
+
+;@           IN  TXT     "v=spf1 mx -all"
+
+; vim: set ft=bindzone :
