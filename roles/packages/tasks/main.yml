@@ -1,0 +1,12 @@
+---
+- name: update packages database
+  command: pkg update
+
+- name: install packages
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - tmux
+    - vim-lite
+    - mosh

@@ -1,0 +1,11 @@
+---
+- name: Deploy configurations
+  hosts: "{{ host | default('all') }}"
+  user: "{{ deploy_user }}"
+  become: true
+
+  roles:
+    - packages
+    - dns
+
+# vim: set ft=yaml sw=2: #
