@@ -1,0 +1,35 @@
+---
+- name: install unbound and nsd
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - unbound
+    - nsd
+
+# "root-hints" is the file which contains the listing of primary root
+# DNS servers.  Unbound does have a listing of root DNS servers in its
+# code, but we want to make sure we have the most up to date copy.
+# We normally update our copy once every 6 months.
+#
+# References:
+# * Unbound DNS Server Tutorial
+#   https://calomel.org/unbound_dns.html
+#
+- name: unbound - fetch root.hints
+  command: >
+    fetch -o /usr/local/etc/unbound/root.hints
+    "https://www.internic.net/domain/named.cache"
+
+- name: unbound - copy configuration
+  copy:
+    src: unbound.conf
+    dest: /usr/local/etc/unbound/unbound.conf
+
+- name: unbound - enable and start service
+  command: rcenable unbound
+
+- name: setup resolv.conf
+  copy:
+    src: resolv.conf
+    dest: /etc/resolv.conf
