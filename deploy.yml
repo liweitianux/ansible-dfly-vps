@@ -6,6 +6,7 @@
 
   roles:
     - packages
+    - shadowsocks
     - dns
 
 # vim: set ft=yaml sw=2: #

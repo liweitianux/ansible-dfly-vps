@@ -1,0 +1,32 @@
+---
+- name: install shadowsocks-libev
+  pkgng:
+    name: shadowsocks-libev
+    state: present
+
+- name: setup configuration file
+  template:
+    src: config.json.j2
+    dest: /usr/local/etc/shadowsocks-libev/config.json
+    mode: 0640
+  notify: restart-shadowsocks
+
+- name: enable and start service
+  command: rcenable shadowsocks-libev
+
+- name: show client-side config
+  vars:
+    config: |
+      "{"
+          "server": "{{ ansible_ssh_host }}",
+          "server_port": {{ shadowsocks.server_port }},
+          "local_port": 1080,
+          "password": "{{ shadowsocks.password }}",
+          "method": "{{ shadowsocks.method }}",
+          "timeout": 600,
+          "fast_open": true,
+          "reuse_port": true,
+          "no_delay": true
+      "}"
+  debug:
+    msg: "{{ config.split('\n') }}"

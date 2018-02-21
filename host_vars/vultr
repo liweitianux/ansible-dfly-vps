@@ -3,4 +3,10 @@ ansible_ssh_host: vultr.liwt.net
 ansible_ssh_port: 8864
 ansible_python_interpreter: /usr/local/bin/python2.7
 
+shadowsocks:
+  server_port: 8989
+  password: "???"
+  method: "chacha20-ietf-poly1305"
+  nameserver: "8.8.8.8"
+
 # vim: set ft=yaml sw=2: #

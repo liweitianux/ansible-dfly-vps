@@ -1,0 +1,13 @@
+{
+    "server": ["::0", "0.0.0.0"],
+    "server_port": {{ shadowsocks.server_port }},
+    "local_port": 1080,
+    "password": "{{ shadowsocks.password }}",
+    "method": "{{ shadowsocks.method }}",
+    "nameserver": "{{ shadowsocks.nameserver }}",
+    "timeout": 600,
+    "fast_open": true,
+    "reuse_port": true,
+    "no_delay": true,
+    "user": "nobody"
+}
