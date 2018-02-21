@@ -7,9 +7,6 @@
   user: root
   gather_facts: false
 
-  vars:
-    deploy_user: ansible
-
   roles:
     - bootstrap
 
