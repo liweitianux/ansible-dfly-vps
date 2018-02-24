@@ -5,17 +5,25 @@
 - debug: var=ansible_ssh_port
 - debug: var=ansible_ssh_private_key_file
 
-- name: User - create deployment user account (group)
-  command: pw groupadd "{{ deploy_user }}" -g 999
-  ignore_errors: true
+- name: group - check deployment group
+  command: pw groupshow "{{ deploy_user }}"
+  register: pw_cmd
 
-- name: User - create deployment user account (user)
+- name: group - create deployment group
+  command: pw groupadd "{{ deploy_user }}" -g 999
+  when: pw_cmd.rc != 0
+
+- name: user - check deployment user
+  command: pw usershow "{{ deploy_user }}"
+  register: pw_cmd
+
+- name: user - create deployment user
   command: >
     pw useradd "{{ deploy_user }}"
     -u 999 -g "{{ deploy_user }}"
     -m -d "/var/{{ deploy_user }}"
-    -C "Ansible Deployment"
-  ignore_errors: true
+    -c "Ansible Deployment"
+  when: pw_cmd.rc != 0
 
 - name: SSH - authorized_keys for the deployment user
   authorized_key:
@@ -35,10 +43,10 @@
 - name: SSH - disable password auth for the deployment user
   blockinfile:
     path: /etc/ssh/sshd_config
+    marker: "# {mark} ANSIBLE MANAGED - ansible"
     block: |
       Match User {{ deploy_user }}
           PasswordAuthentication no
-    backup: true
     validate: "sshd -t -f %s"
   notify: restart-sshd
 
