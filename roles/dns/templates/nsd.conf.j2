@@ -99,20 +99,6 @@ remote-control:
     control-cert-file: "/usr/local/etc/nsd/nsd_control.pem"
 
 
-# Secret keys for TSIGs that secure zone transfers.
-# You could include: "secret.keys" and put the "key:" statements there,
-# and give that file special access control permissions.
-#
-key:
-    # The key name is used to refer to this key in the access control list,
-    # and must be correct for TSIG to work.
-    name: "{{ nsd.key_name }}"
-
-    # The base64-encoded shared secret.
-    # e.g.: dd if=/dev/random bs=32 count=1 | openssl base64
-    secret: "{{ nsd.key_secret }}"
-
-
 # Patterns have zone configuration that are shared by one or more zones.
 #
 pattern:

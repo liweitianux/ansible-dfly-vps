@@ -20,11 +20,7 @@ shadowsocks:
   nameserver: "8.8.8.8"
 
 nsd:
-  # Secret key for TSIGs that secure zone transfers.
-  key_name: nsdkey
-  # Generate by e.g.: dd if=/dev/random bs=32 count=1 | openssl base64
-  key_secret: cuE2ZtReggzlaVzCmD0VWAnZp494x0KnPG4pSTU63LE=
-  # Domains/zones
+  # List of domains/zones
   zones:
     - 233233.xyz
     - 1314233.xyz
