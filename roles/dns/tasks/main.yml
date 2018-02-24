@@ -22,6 +22,15 @@
     "https://www.internic.net/domain/named.cache"
   notify: reload-unbound
 
+- name: unbound - check existence of control key/cert
+  stat:
+    path: /usr/local/etc/unbound/unbound_control.key
+  register: stat_result
+
+- name: unbound - generate self-signed key/cert for control
+  command: unbound-control-setup
+  when: stat_result.stat.exists == False
+
 - name: unbound - copy configuration
   copy:
     src: unbound.conf
@@ -36,6 +45,9 @@
     src: resolv.conf
     dest: /etc/resolv.conf
 
+#
+# NSD
+#
 - name: NSD - copy configuration
   template:
     src: nsd.conf.j2
