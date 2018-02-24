@@ -20,13 +20,13 @@
   command: >
     fetch -o /usr/local/etc/unbound/root.hints
     "https://www.internic.net/domain/named.cache"
-  notify: restart-unbound
+  notify: reload-unbound
 
 - name: unbound - copy configuration
   copy:
     src: unbound.conf
     dest: /usr/local/etc/unbound/unbound.conf
-  notify: restart-unbound
+  notify: reload-unbound
 
 - name: unbound - enable and start service
   command: rcenable unbound
@@ -40,7 +40,7 @@
   template:
     src: nsd.conf.j2
     dest: /usr/local/etc/nsd/nsd.conf
-  notify: restart-nsd
+  notify: reload-nsd
 
 - name: NSD - check existence of control key/cert
   stat:
@@ -61,7 +61,7 @@
     src: "zones/{{ item }}.zone.j2"
     dest: "/usr/local/etc/nsd/zones/{{ item }}.zone"
   with_items: "{{ nsd.zones }}"
-  notify: restart-nsd
+  notify: reload-nsd
 
 - name: NSD - enable and start service
   command: rcenable nsd

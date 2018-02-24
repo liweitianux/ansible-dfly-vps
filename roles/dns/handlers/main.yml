@@ -2,5 +2,11 @@
 - name: restart-unbound
   command: rcrestart unbound
 
+- name: reload-unbound
+  command: rcreload unbound
+
 - name: restart-nsd
   command: rcrestart nsd
+
+- name: reload-nsd
+  command: rcreload nsd
