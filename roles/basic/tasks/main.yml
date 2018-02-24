@@ -1,8 +1,8 @@
 ---
-- name: update packages database
+- name: pkg - update packages database
   command: pkg update
 
-- name: install packages
+- name: pkg - install packages
   pkgng:
     name: "{{ item }}"
     state: present
