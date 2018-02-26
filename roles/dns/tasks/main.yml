@@ -68,11 +68,11 @@
     path: /usr/local/etc/nsd/zones
     state: directory
 
-- name: NSD - copy zone files
+- name: NSD - generate zone files
   template:
     src: "zones/{{ item }}.zone.j2"
     dest: "/usr/local/etc/nsd/zones/{{ item }}.zone"
-  with_items: "{{ nsd.zones }}"
+  with_items: "{{ domains }}"
   notify: reload-nsd
 
 - name: NSD - enable and start service

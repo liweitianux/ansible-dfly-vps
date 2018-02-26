@@ -114,21 +114,20 @@ pattern:
     # nsd-control stats and stats_noreset.
     zonestats: "%s"
 
-    # Notify these slaves when the master zone changes
-    notify: 174.37.196.55   NOKEY  # freedns.afraid.org
-    notify: 93.95.224.6     NOKEY  # 1984hosting.com
-
-    # Allow these IPs and TSIG to transfer zones.
-    provide-xfr: 174.37.196.55  NOKEY  # freedns.afraid.org
-    provide-xfr: 93.95.224.6    NOKEY  # 1984hosting.com
+    # Notify these slaves when the master zone changes, and allow them
+    # to transfer zones.
+{% for server in nameservers %}
+    notify: {{ server.xfr_ip }} NOKEY  # {{ server.name }}
+    provide-xfr: {{ server.xfr_ip }} NOKEY  # {{ server.name }}
+{% endfor %}
 
 
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.
 #
-{% for zone in nsd.zones %}
+{% for domain in domains %}
 zone:
-    name: "{{ zone }}"
+    name: "{{ domain }}"
     include-pattern: "stealth_zones"
 
 {% endfor %}

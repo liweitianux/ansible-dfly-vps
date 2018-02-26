@@ -13,15 +13,25 @@ network:
     address: 2001:19f0:5:3166::c0f:fee
     prefixlen: 64
 
+domains:
+  - 233233.xyz
+  - 1314233.xyz
+
+nameservers:
+  - name: afraid
+    xfr_ip: 174.37.196.55
+    ns:
+      - ns2.afraid.org
+  - name: 1984hosting
+    xfr_ip: 93.95.224.6
+    ns:
+      - ns0.1984.is
+      - ns1.1984.is
+      - ns2.1984.is
+
 shadowsocks:
   server_port: 8989
   password: "???"
   method: "chacha20-ietf-poly1305"
-
-nsd:
-  # List of domains/zones
-  zones:
-    - 233233.xyz
-    - 1314233.xyz
 
 # vim: set ft=yaml sw=2: #
