@@ -17,7 +17,6 @@ shadowsocks:
   server_port: 8989
   password: "???"
   method: "chacha20-ietf-poly1305"
-  nameserver: "8.8.8.8"
 
 nsd:
   # List of domains/zones
