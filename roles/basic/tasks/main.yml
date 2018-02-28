@@ -38,3 +38,10 @@
     - tmux
     - vim-lite
     - mosh
+- name: vim - add basic configurations
+  blockinfile:
+    path: /usr/local/etc/vim/vimrc
+    block: |
+      set background=dark
+      colorscheme desert
+
