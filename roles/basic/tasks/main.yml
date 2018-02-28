@@ -1,4 +1,26 @@
 ---
+- name: rc.conf - tune basic services
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - basic"
+    block: |
+      nfs_reserved_port_only="YES"
+      nfs_client_enable="NO"
+      rpc_umntall_enable="NO"
+      mixer_enable="NO"
+      blanktime="NO"
+
+- name: loader.conf - tune some variables
+  blockinfile:
+    path: /boot/loader.conf
+    marker: "# {mark} ANSIBLE MANAGED - basic"
+    block: |
+      vm.dma_reserved=16m
+      hw.x2apic_enable=1
+      hint.xhci.0.disabled=1
+      hint.ehci.0.disabled=1
+      hint.ahci.disabled=1
+
 - name: pkg - disable repo auto update
   lineinfile:
     path: /usr/local/etc/pkg.conf
