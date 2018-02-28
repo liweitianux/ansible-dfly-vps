@@ -38,6 +38,9 @@
     - tmux
     - vim-lite
     - mosh
+    - rsync
+    - htop
+
 - name: vim - add basic configurations
   blockinfile:
     path: /usr/local/etc/vim/vimrc
