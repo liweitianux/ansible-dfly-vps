@@ -1,5 +1,11 @@
 ---
-- name: pkg - update packages database
+- name: pkg - disable repo auto update
+  lineinfile:
+    path: /usr/local/etc/pkg.conf
+    regexp: "^#?REPO_AUTOUPDATE"
+    line: "REPO_AUTOUPDATE = false;"
+
+- name: pkg - update repos
   command: pkg update
 
 - name: pkg - install packages
