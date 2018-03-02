@@ -54,27 +54,20 @@ server:
     #database: "/var/db/nsd/nsd.db"
     database: ""
 
-    # The directory for "zonefile" files.  The daemon chdirs here.
-    #zonesdir: "/usr/local/etc/nsd"
-
-    # The list of dynamically added zones.
-    #zonelistfile: "/var/db/nsd/zone.list"
-
     # Don't answer VERSION.BIND and VERSION.SERVER CHAOS class queries
     hide-version: yes
 
     # Identify the server (CH TXT ID.SERVER entry)
     identity: ""
 
-    # Statistics are produced every number of seconds. Prints to log.
-    # Default is 0, meaning no statistics are produced.
+    # Statistics are produced every number of seconds.
     # NOTE: requires BIND 8 statistics, which is disabled in the package
     #statistics: 7200
 
     # Verbosity level (0, 1, 2).
     # Level 0 will print warnings and errors, and other events that are
     # important to keep NSD running.
-    verbosity: 0
+    verbosity: 1
 
     # Log messages to file.  Default to stderr and syslog (with
     # facility LOG_DAEMON).  stderr disappears when daemon goes to bg.
@@ -125,9 +118,9 @@ pattern:
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.
 #
-{% for domain in domains %}
+{% for zf in zonefiles %}
 zone:
-    name: "{{ domain.name }}"
+    name: "{{ zf | basename | regex_replace('\.zone\.j2', '') }}"
     include-pattern: "stealth_zones"
 
 {% endfor %}
