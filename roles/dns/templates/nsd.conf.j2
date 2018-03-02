@@ -127,7 +127,7 @@ pattern:
 #
 {% for domain in domains %}
 zone:
-    name: "{{ domain }}"
+    name: "{{ domain.name }}"
     include-pattern: "stealth_zones"
 
 {% endfor %}

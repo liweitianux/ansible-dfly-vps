@@ -4,6 +4,8 @@ ansible_ssh_port: 8864
 ansible_python_interpreter: /usr/local/bin/python2.7
 
 network:
+  hostname: vultr
+  domain: liwt.net
   interface: vtnet0
   ipv4:
     address: 45.77.201.74
@@ -14,8 +16,19 @@ network:
     prefixlen: 64
 
 domains:
-  - 233233.xyz
-  - 1314233.xyz
+  - name: liwt.net
+    sub:
+      - mail
+      - www
+      - git
+  - name: 233233.xyz
+    sub:
+      - www
+      - g
+      - zw
+  - name: 1314233.xyz
+    sub:
+      - www
 
 nameservers:
   - name: afraid
