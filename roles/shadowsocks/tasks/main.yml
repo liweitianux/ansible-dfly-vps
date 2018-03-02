@@ -19,7 +19,7 @@
     config: |
       "{"
           "server": "{{ ansible_ssh_host }}",
-          "server_port": {{ shadowsocks.server_port }},
+          "server_port": {{ shadowsocks.port }},
           "local_port": 1080,
           "password": "{{ shadowsocks.password }}",
           "method": "{{ shadowsocks.method }}",

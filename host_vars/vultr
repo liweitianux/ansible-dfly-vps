@@ -30,7 +30,7 @@ nameservers:
       - ns2.1984.is
 
 shadowsocks:
-  server_port: 8989
+  port: 8989
   password: "???"
   method: "chacha20-ietf-poly1305"
 
