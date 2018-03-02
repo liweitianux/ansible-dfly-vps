@@ -70,9 +70,11 @@
 
 - name: NSD - generate zone files
   template:
-    src: "zones/{{ item }}.zone.j2"
-    dest: "/usr/local/etc/nsd/zones/{{ item }}.zone"
-  with_items: "{{ domains }}"
+    src: "{{ item }}"
+    dest: /usr/local/etc/nsd/zones/{{ item | basename | regex_replace('\.j2', '') }}
+  # NOTE: `with_fileglob` always operates from `files/`
+  with_fileglob:
+    - "../templates/zones/*.j2"
   notify: reload-nsd
 
 - name: NSD - enable and start service

@@ -1,0 +1,46 @@
+{% set domain = "liwt.net" %}
+{% set hostmaster = "hostmaster." + network.domain %}
+; {{ ansible_managed }}
+$ORIGIN     {{ domain }}.
+$TTL        1h
+
+; WARNING:
+;
+; The DNS CNAME ("canonical name") record exists to provide the canonical
+; name associated with an alias name.  There may be only one such canonical
+; name for any one alias.  That name should generally be a name that exists
+; elsewhere in the DNS, though there are some rare applications for aliases
+; with the accompanying canonical name undefined in the DNS.  An alias name
+; (label of a CNAME record) may, if DNSSEC is in use, have SIG, NXT, and
+; KEY RRs, but may have no other data.
+;
+; Credit: https://serverfault.com/a/613830
+
+@           IN  SOA     {{ nameservers[0].ns[0] }}.  {{ hostmaster }}.  (
+                        {{ domain | next_serial }}  ; serial number
+                        1d          ; refresh
+                        2h          ; retry
+                        4w          ; expire
+                        1h          ; minimum
+                        )
+
+{% for server in nameservers %}
+{% for ns in server.ns %}
+@           IN  NS      {{ ns }}.  ; {{ server.name }}
+{% endfor %}
+{% endfor %}
+
+@           IN  A       {{ network.ipv4.address }}
+@           IN  AAAA    {{ network.ipv6.address }}
+mail        IN  A       {{ network.ipv4.address }}
+mail        IN  AAAA    {{ network.ipv6.address }}
+
+www         IN  CNAME   @
+git         IN  CNAME   @
+vultr       IN  CNAME   @
+*           IN  CNAME   @
+
+@           IN  MX      10  mail
+@           IN  TXT     "v=spf1 mx -all"
+
+; vim: set ft=bindzone:
