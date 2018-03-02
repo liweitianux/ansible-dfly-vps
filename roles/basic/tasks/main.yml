@@ -44,6 +44,7 @@
 - name: vim - add basic configurations
   blockinfile:
     path: /usr/local/etc/vim/vimrc
+    marker: '" {mark} ANSIBLE MANAGED - basic'
     block: |
       set background=dark
       colorscheme desert
