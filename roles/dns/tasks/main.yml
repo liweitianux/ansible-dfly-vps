@@ -35,6 +35,7 @@
   copy:
     src: unbound.conf
     dest: /usr/local/etc/unbound/unbound.conf
+    validate: "unbound-checkconf %s"
   notify: reload-unbound
 
 - name: unbound - enable and start service
@@ -48,12 +49,6 @@
 #
 # NSD
 #
-- name: NSD - copy configuration
-  template:
-    src: nsd.conf.j2
-    dest: /usr/local/etc/nsd/nsd.conf
-  notify: reload-nsd
-
 - name: NSD - check existence of control key/cert
   stat:
     path: /usr/local/etc/nsd/nsd_control.key
@@ -75,6 +70,13 @@
   # NOTE: `with_fileglob` always operates from `files/`
   with_fileglob:
     - "../templates/zones/*.j2"
+
+# NOTE: requires variable `zonefiles`
+- name: NSD - generate configuration
+  template:
+    src: nsd.conf.j2
+    dest: /usr/local/etc/nsd/nsd.conf
+    validate: "nsd-checkconf %s"
   notify: reload-nsd
 
 - name: NSD - enable and start service
