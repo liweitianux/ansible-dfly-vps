@@ -29,7 +29,7 @@
 
 - name: unbound - generate self-signed key/cert for control
   command: unbound-control-setup
-  when: stat_result.stat.exists == False
+  when: not stat_result.stat.exists
 
 - name: unbound - copy configuration
   copy:
@@ -61,7 +61,7 @@
 
 - name: NSD - generate self-signed key/cert for control
   command: nsd-control-setup
-  when: stat_result.stat.exists == False
+  when: not stat_result.stat.exists
 
 - name: NSD - create zones directory
   file:
