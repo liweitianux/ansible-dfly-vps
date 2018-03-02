@@ -1,3 +1,4 @@
+# -*- mode: yaml; -*-
 ---
 ansible_ssh_host: vultr.liwt.net
 ansible_ssh_port: 8864
@@ -41,6 +42,29 @@ nameservers:
       - ns0.1984.is
       - ns1.1984.is
       - ns2.1984.is
+
+mail:
+  domains:
+    - liwt.net
+    - aaronly.me
+  dkim:
+    selector: mail
+    bits: 2048
+    port: 8901
+  dmarc:
+    p: none  # policy for the domain
+    sp: none  # policy for subdomains of this domain
+    aspf: r  # alignment mode for SPF (r: relaxed; s: strict)
+    pct: 100  # percent of messages subjected to filtering
+    # reporting URI of aggregate reports
+    # Free DMARC weekly digests by https://dmarc.postmarkapp.com/
+    rua:
+      liwt.net: ???
+      aaronly.me: re+f6lpmirefcg@dmarc.postmarkapp.com
+  # To avoid trashing by GMail
+  google-site-verification:
+    liwt.net: ???
+    aaronly.me: rSh99lenrfS-HnzvEahEDYTj9UvoKeX4NdWmDzD-pxo
 
 shadowsocks:
   port: 8989
