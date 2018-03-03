@@ -21,10 +21,22 @@
       hint.ehci.0.disabled=1
       hint.ahci.disabled=1
 
+- name: syslog - enable console log file (1/2)
+  lineinfile:
+    path: /etc/syslog.conf
+    regexp: '^#?\s*console.info'
+    line: "console.info	/var/log/console.log"
+
+- name: syslog - enable console log file (2/2)
+  file:
+    path: /var/log/console.log
+    state: touch
+    mode: 0600
+
 - name: pkg - disable repo auto update
   lineinfile:
     path: /usr/local/etc/pkg.conf
-    regexp: "^#?REPO_AUTOUPDATE"
+    regexp: '^#?REPO_AUTOUPDATE'
     line: "REPO_AUTOUPDATE = false;"
 
 - name: pkg - update repos
