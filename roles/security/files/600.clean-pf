@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Clean up PF tables ...
+#
+
+if [ -r /etc/defaults/periodic.conf ]
+then
+    . /etc/defaults/periodic.conf
+    source_periodic_confs
+fi
+
+case "$daily_clean_pf_enable" in
+    [Yy][Ee][Ss])
+	echo ""
+	echo "PF tables cleanup:"
+        : ${daily_clean_pf_expire:=86400}
+        for table in $daily_clean_pf_tables; do
+            echo "Cleanup table $table ..."
+	    pfctl -t $table -T expire $daily_clean_pf_expire
+            rc=$?
+        done
+        ;;
+    *)
+        rc=0
+        ;;
+esac
+
+exit $rc

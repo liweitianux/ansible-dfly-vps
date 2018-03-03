@@ -1,0 +1,41 @@
+---
+- name: firewall - setup PF rules
+  template:
+    src: pf.conf.j2
+    dest: /etc/pf.conf
+    validate: "pfctl -nf %s"
+
+- name: firewall - enable PF
+  command: rcenable pf
+
+- name: firewall - enable PF log
+  command: rcenable pflog
+
+- name: sshlockout - setup with PF
+  blockinfile:
+    path: /etc/syslog.conf
+    marker: '# {mark} ANSIBLE MANAGED - sshlockout'
+    block: |
+      # Block SSH auth failures using "sshlockout" and "pf"
+      auth.info;authpriv.info	|exec /usr/sbin/sshlockout -pf bruteforce
+
+- name: periodic - copy clean-pf script
+  copy:
+    src: 600.clean-pf
+    dest: /etc/periodic/daily/600.clean-pf
+    mode: 0755
+
+- name: periodic - touch config file
+  file:
+    path: /etc/periodic.conf
+    state: touch
+    mode: 0644
+
+- name: periodic - enable clean-pf
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: '# {mark} ANSIBLE MANAGED - clean-pf'
+    block: |
+      # Clean up PF tables
+      daily_clean_pf_enable="YES"
+      daily_clean_pf_tables="bruteforce"

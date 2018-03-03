@@ -71,4 +71,9 @@ shadowsocks:
   password: "???"
   method: "chacha20-ietf-poly1305"
 
+vpn:
+  interface: tun0
+  network4: 10.6.20.0
+  port: 8080
+
 # vim: set ft=yaml sw=2: #

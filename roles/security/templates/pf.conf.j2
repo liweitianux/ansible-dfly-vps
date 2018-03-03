@@ -1,0 +1,378 @@
+#
+# /etc/pf.conf
+# ------------
+# PF rules for DragonFly BSD
+#
+#
+# Introduction
+# ------------
+# PF selectively passes or blocks data packets on a network interface
+# based on the Layer 3 (IPv4 and IPv6) and Layer 4 (TCP, UDP, ICMP, and
+# ICMPv6) headers.  The most often used criteria are source and
+# destination address, source and destination port, and protocol.
+# A series of rules specify matching criteria and the action block or
+# pass.  PF is a *last-matching-rule-wins* firewall.
+# An implicit `pass all` at the beginning of the ruleset means that if a
+# packet does not match any filter rule the packet passes.  A best practice
+# is to add an explicit `block all` as the first rule of a ruleset.
+#
+#
+# References
+# ----------
+# [1] OpenBSD PF - User's Guide
+#     https://www.openbsd.org/faq/pf/index.html
+# [2] Firewalling with OpenBSD's PF packet filter
+#     https://home.nuug.no/~peter/pf/en/index.html
+# [3] The Book of PF (3rd Edition, 2015)
+#     http://nostarch.com/pf3
+# [4] PF Firewall Tutorial (FreeBSD and OpenBSD)
+#     https://calomel.org/pf_config.html
+# [5] OpenBSD PF (brief introduction)
+#     https://paulgorman.org/technical/openbsd-pf.txt
+# [6] FreeBSD Handbook - 29.3 PF
+#     https://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/firewalls-pf.html
+# [7] PF - A baseline configuration for a web server with IPv6 and TLS/SSL
+#     https://forums.freebsd.org/threads/56470/
+# [8] How to secure FreeBSD with PF firewall
+#     https://www.vultr.com/docs/how-to-secure-freebsd-with-pf-firewall
+# [9] OpenBSD packet filter (PF): Real life example
+#     http://daemon-notes.com/articles/network/pf
+# [10] A simple VPN tunnel with FreeBSD
+#      https://cyprio.net/wtf/2014-03-21-a-simple-vpn-tunnel-with-freebsd.html
+# [11] A Barebones PF IPv6 Firewall Ruleset
+#      https://content.pivotal.io/blog/a-barebones-pf-ipv6-firewall-ruleset
+# [12] FreeBSD-PF: urpf-failed & IPv6
+#      https://lists.freebsd.org/pipermail/freebsd-pf/2010-July/005724.html
+# [13] DIY VPN with DragonFly, PF and OpenVPN
+#      http://rampke.de/diyvpn/
+# [14] OpenVPN with IPv6 and OpenBSD on a cheap VPS
+#      http://rampke.de/ipv6-openvpn/
+#
+#
+# Configurations
+# --------------
+# * Enable PF service, see pfctl(8) for additional options:
+#       pf_enable="YES"
+#       pf_flags=""    # additional flags for "pfctl" startup
+# * Specify the ruleset configuration file for PF:
+#       pf_rules="/etc/pf.conf"   # default
+# * Enable logging support provided by pflog(4):
+#       pflog_enable="YES"
+# * Further configure the pflog:
+#       pflog_flags=""   # additional flags for "pflogd" startup
+#       pflog_logfile="/var/log/pflog"   # default
+#
+#
+# Usage Examples
+# --------------
+# * pfctl -vnf /etc/pf.conf
+#   Check "/etc/pf.conf" for errors, but do not load ruleset.
+# * pfctl -F all -f /etc/pf.conf
+#   Flush all NAT, filter, state, and table rules, and reload ruleset.
+# * pfctl -e
+#   Enable PF.
+# * pfctl -d
+#   Disable PF.
+# * pfctl -s [ rules | nat | states ]
+#   Report on the filter rules, NAT rules, or state table.
+# * pfctl -k host
+#   Kill all state entries originating from "host".
+# * pfctl -s states -vv
+#   Show state ID's, ages, and rule numbers.
+# * pfctl -s rules -vv
+#   Show rules with stats and rule numbers.
+# * pfctl -s Tables
+#   List tables.
+# * pfctl -s info
+#   Show filter stats and counters.
+# * pfctl -s all
+#   Show everything.
+# * pfctl -t foo -T show
+#   Show the contents of table "foo".
+# * pfctl -t foo -T add xx.xx.xx.xx
+#   Add address "xx.xx.xx.xx" to table "foo".
+# * pfctl -t foo -T delete xx.xx.xx.xx
+#   Delete address "xx.xx.xx.xx" from table "foo".
+#
+# * tcpdump -n -e -ttt -i pflog0
+#   Get PF logging messages from the "pflog0" interface.
+# * tcpdump -n -e -ttt -r /var/log/pflog
+#   Read PF logging from the "pflog" file.
+#
+#
+# Aaron LI
+# 2017-05-08
+#
+
+
+##
+## NOTE:
+##
+#
+# * Avoid negated lists (e.g. "{ 10.0.0.0/8, !10.1.2.3 }"), because each
+#   list item expands to add another rule, which causes undesirable results.
+#
+# * persist : (table)
+#   Force the kernel to keep the table even when no rules refer to it.
+#   If this flag is not set, the kernel will automatically remove the
+#   table when the last rule referring to it is flushed.
+# * quick : (rule)
+#   If the rule is matched, no further rules will be evaluated!
+# * self : (rule)
+#   Expands to all addresses assigned to all interfaces.
+#
+# * egress : (interface group)
+#   The kernel automatically creates an `egress` group for the interface(s)
+#   that hold the default route(s).
+# * Interface (group) names, and `self` can have *modifiers* appended:
+#   + `:0` : Do not include interface aliases.
+#   + `:broadcast` : Translates to the interface's broadcast address(es).
+#   + `:network` : Translates to the network(s) attached to the interface.
+#   + `:peer` : Translates to the point-to-point interface's peer address(es).
+# * Host names may also have the `:0` modifier appended to restrict the
+#   name resolution to the first of each v4 and v6 address found.
+# * Host name resolution and interface to address translation are done at
+#   ruleset *load-time*.  By surrounding the interface name (and optional
+#   modifiers) in *parentheses* makes PF update the rules whenever the
+#   interface changes its address, avoiding manual reloading, which is
+#   especially useful with NAT. 
+#
+# * VPN (e.g., OpenVPN) requires a tunnel interface (e.g., tun0) on which
+#   the NAT and corresponding filtering rules are needed; however, it is
+#   required that the interface exists when loading the rules to make them
+#   effective.  Therefore, a script to reload the PF rules after OpenVPN
+#   startup is recommended (see, /usr/local/etc/openvpn/server-up.sh).
+#
+
+
+##
+## Macros & Lists
+##
+
+# External interface
+ext_if = "{{ network.interface }}"
+# Tunnel interface used by VPN
+vpn_if = "{{ vpn.interface }}"
+# Network used by VPN on $vpn_if
+vpn_net  = "{{ vpn.network4 }}/24"
+
+# Allowed Services (incoming & outgoing)
+#   * {{ ansible_ssh_port }}: SSH on custom port
+#   * {{ ansible_ssh_port+1 }}: UDP port for Mosh connection
+#   * domain: DNS resolution
+#   * ntp: NTP daemon
+#   * smtp: mail server (incoming & outgoing)
+#   * submission: mail server (accept mail from MUA/user)
+#   * imaps: IMAP server
+#   * http & https: web service
+#   * git: Git clone etc.
+#   * {{ shadowsocks.port }}: ShadowSocks server
+#   * {{ vpn.port }}: OpenVPN service (tcp & udp)
+#
+# For restrictive incoming rules
+in_tcp_services_restricted = "{ {{ ansible_ssh_port }}, smtp, submission, imaps }"
+# For non-restrictive incoming rules
+in_tcp_services = "{ domain, http, https, {{ vpn.port }}, {{ shadowsocks.port }} }"
+# For incoming UDP rules
+in_udp_services = "{ domain, {{ vpn.port }}, {{ ansible_ssh_port+1 }} }"
+# For outgoing rules
+# NOTE: allow outgoing SMTP connections for remote mail delivery!
+out_tcp_services = "{ domain, smtp, http, https, git, ssh }"
+out_udp_services = "{ domain, ntp }"
+
+# IPv4 ICMP:
+#   * echoreq :
+#     Echo request; used by "ping(8)" and "traceroute(8)"
+#     NOTE: also open the UDP ports 33433-33626 for "traceroute(8)"
+#   * unreach :
+#     Destination unreachable; allow for path MTU discovery
+# See also OpenBSD's icmp(4): https://man.openbsd.org/icmp
+icmp_types = "{ echoreq, unreach }"
+
+# IPv6 ICMP (i.e., icmp6)
+#
+# The updated "icmp6" protocol plays a more crucial role than ever in
+# parameter passing and even host configuration, and its misconfiguration
+# will cause significant problems for the IPv6 traffic.
+#
+# Generally, the ICMPv6 types "unreach", "toobig", "neighbradv", and
+# "neighbrsol" should be allowed to make IPv6 work normally!
+#
+# NOTE:
+# ICMPv6 Neighbor Solicitation (NS) sends packets to the local network
+# segment multicast address.  If you don't accept those multicast
+# packets, your neighbors (including your upstream router) won't be able
+# to discover you, and your external interface's IPv6 address will be
+# unreachable from other machines.
+# Credit: https://content.pivotal.io/blog/a-barebones-pf-ipv6-firewall-ruleset
+#
+#   * toobig : Packet too big
+#   * timex : Time exceeded
+#   * paramprob : Invalid IPv6 header
+#   * routeradv & routersol :
+#     For getting address using IPv6 autoconfiguration from router.
+#   * neighbradv & neighbrsol :
+#     For getting neighbor addresses.
+# See also OpenBSD's icmp6(4): https://man.openbsd.org/icmp6
+icmp6_types = "{ echoreq, unreach, toobig, timex, paramprob, \
+                 routeradv, routersol, neighbradv, neighbrsol }"
+
+
+##
+## Tables
+##
+
+# Bruteforce protection (e.g., SSH)
+table <bruteforce> persist
+
+# Martians: non-routables addresses as defined by stantards
+# https://www.iana.org/assignments/iana-ipv4-special-registry/
+# https://www.iana.org/assignments/iana-ipv6-special-registry/
+# http://en.wikipedia.org/wiki/Reserved_IP_addresses
+table <martians> const { \
+      0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8, \
+      169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24, \
+      192.168.0.0/16, 198.18.0.0/15, 198.51.100.0/24, \
+      203.0.113.0/24, 240.0.0.0/4, 255.255.255.255/32, \
+      ::1/128, ::/128, ::/96, ::ffff:0:0/96, 100::/64, \
+      2001::/32, 2001:2::/48, 2001:db8::/32, fc00::/7, fe80::/10 \
+}
+
+
+##
+## Options
+##
+
+# Play nicely to return with status codes
+set block-policy return
+
+# Disable all filtering (with NAT & redirection) on loopback interface
+set skip on lo0
+
+# Enable collection of packet and byte count statistics for the external
+# interface, which can be viewed using `pfctl -s info`.
+set loginterface $ext_if
+
+
+##
+## Rules
+##
+
+# Network packet normalization
+# Enabling scrub provides a measure of protection against certain kinds of
+# attacks based on incorrect handling of packet fragments
+scrub in all
+
+# NAT for the VPN network
+nat on $ext_if inet from $vpn_net to any -> ($ext_if:0)
+
+# Block all incoming & outgoing traffics by default
+# XXX: need to figure out how to allow all VPN outgoing traffic!
+#block log all
+#
+# Block all incoming traffic while allow all outgoing traffic
+block in log all
+pass  out    all keep state
+
+# Allow all VPN traffics
+pass quick on $vpn_if
+
+# The antispoof mechanism protects against activity from spoofed or
+# forged IP addresses, mainly by blocking packets appearing on
+# interfaces and in directions which are logically not possible.
+# Use "antispoof" only on interfaces with an IP address.
+#
+antispoof log quick for $ext_if
+
+# Mandatory rules for the link-local IPv6 traffics
+#
+# Credit:
+# * https://lists.freebsd.org/pipermail/freebsd-pf/2010-July/005724.html
+# * FreeBSD: /etc/rc.firewall
+anchor "ipv6-link-local" quick inet6 {
+    # Duplicate address detection (DAD)
+    pass proto icmp6 from :: to ff02::/16
+    # RS, RA, NS, NA, redirect ...
+    pass proto icmp6 from fe80::/10 to { fe80::/10, ff02::/16 }
+    # Link-local multicast traffic
+    pass from { fe80::/10, (self:network) } to ff02::/16
+    # DHCPv6
+    pass proto udp from fe80::/10 to (self) port dhcpv6-client
+}
+
+# Block non-routables addresses.
+#
+# WARNING: Make sure the above IPv6 link-local traffic is allowed!
+#
+# NOTE: Using "return" action to prevent annoying timeouts for users.
+block drop   in  quick on $ext_if from <martians> to any
+block return out quick on $ext_if from any to <martians>
+
+# Block packets whose ingress interface does not match the
+# one the route back to their source address.
+#
+# WARNING:
+# Without the above "ipv6-link-local" anchor ruleset, this rule will
+# cause problems for the IPv6 traffic!  (see also the links above)
+block in log quick from urpf-failed to any
+
+# Block anything coming form source we have no back routes for.
+block in log quick from no-route to any
+
+# Block bruteforce on all connections (both in and out)
+block log quick from <bruteforce>
+
+# Get rid quick of Internet noises (e.g., broadcast, multicast):
+block drop in quick on $ext_if proto { tcp, udp } from any to any \
+      port { netbios-ns, netbios-dgm, netbios-ssn, microsoft-ds, nfsd }
+
+# Use overload tables to protect restrictive services (e.g., SSH)
+#
+#   * max-src-conn :
+#     number of simultaneous connections allowed from one host
+#   * max-src-conn-rate :
+#     rate of new connections allowed from any single host
+#     per number of seconds (here: 4 connections every 30 seconds).
+#   * overload <bruteforce> :
+#     any host which exceeds these limits gets its address added to
+#     the "bruteforce" table.
+#   * flush global :
+#     when a host reaches the limit, that all (global) of that host's
+#     connections will be terminated (flush).
+#
+# NOTE:
+# Over time, tables will be filled by overload rules and their size
+# will grow incrementally, taking up more memory.  Sometimes an IP
+# address that is blocked is a dynamically assigned one, which has
+# since been assigned to a host who has a legitimate reason to communicate
+# with hosts.  Therefore, the expired entries should get flushed,
+# e.g., this command will remove "bruteforce" table entries which
+# have not been referenced for 86400 seconds (i.e., 1 day):
+#     pfctl -t bruteforce -T expire 86400
+# It is convenient to add such clean command to root's cron table.
+#
+pass in on $ext_if proto tcp to ($ext_if) port $in_tcp_services_restricted \
+     flags S/SA keep state \
+     (max-src-conn 8, max-src-conn-rate 4/30, \
+      overload <bruteforce> flush global)
+
+# Pass traffic for allowed non-restricted services
+pass in on $ext_if proto tcp to ($ext_if) port $in_tcp_services
+pass in on $ext_if proto udp to ($ext_if) port $in_udp_services
+
+# Allow outgoing connection while retaining state information on those
+# connections.  This state information allows return traffic for those
+# connections to pass back and should only be used on machines that can
+# be trusted.
+pass out on $ext_if proto tcp to any port $out_tcp_services keep state
+pass out on $ext_if proto udp to any port $out_udp_services keep state
+
+# ICMP: allow only specified ICMP types (in & out)
+pass on $ext_if inet  proto icmp      all icmp-type  $icmp_types
+pass on $ext_if inet6 proto ipv6-icmp all icmp6-type $icmp6_types
+
+# Allow out the default port range for traceroute(8) & traceroute6(8):
+# base (33434) => base+nhops*nqueries-1 (33434+64*3-1=33625)
+pass out on $ext_if proto udp to port 33433 >< 33626 keep state
+
+# vim: set ts=8 sw=4 tw=0 fenc=utf-8 ft=pf: #
