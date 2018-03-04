@@ -36,8 +36,13 @@ def run_query(cmd, rtype, fqdn, ns=None):
 
 
 def next_serial(fqdn):
-    cmd = "drill"
-    cmd_path = which(cmd)
+    """
+    Generate the next serial number for the DNS SOA record.
+    """
+    for cmd in ["drill", "dig"]:
+        cmd_path = which(cmd)
+        if cmd_path:
+            break
     if cmd_path is None:
         raise Exception("Cannot find %s" % cmd)
 
