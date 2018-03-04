@@ -1,0 +1,26 @@
+---
+- name: domains - check certificate existence
+  stat:
+    path: /usr/local/etc/ssl/acme/{{ item.name }}/fullchain.pem
+  register: stat
+  with_items: "{{ domains }}"
+
+- name: domains - save certificate status in a variable
+  set_fact:
+    domains_hascert: >
+      {{ domains_hascert |
+         default({}) |
+         combine({item.0.name: item.1.stat.exists}) }}
+  with_together:
+    - "{{ domains }}"
+    - "{{ stat.results }}"
+
+- debug: var=domains_hascert
+
+- name: nginx - generate sites
+  template:
+    src: "{{ item }}"
+    dest: /usr/local/etc/nginx/sites/{{ item | basename | regex_replace('\.j2', '') }}
+  # NOTE: `with_fileglob` always operates from `files/`
+  with_fileglob:
+    - "../templates/sites/*.j2"

@@ -1,0 +1,128 @@
+---
+- name: install package
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nginx
+    - acme-client
+
+- name: (local) ssl/tls - check dhparam existence
+  become: false
+  stat:
+    path: "{{ playbook_dir }}/ssl/dhparam4096.pem"
+  delegate_to: localhost
+  register: stat_result
+
+- name: (local) ssl/tls - generate dhparam (4096 bit)
+  become: false
+  command: >
+    openssl dhparam 
+    -out "{{ playbook_dir }}/ssl/dhparam4096.pem" 4096
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+
+- name: ssl/tls - copy dhparam
+  copy:
+    src: "{{ playbook_dir }}/ssl/dhparam4096.pem"
+    dest: /usr/local/etc/ssl/dhparam4096.pem
+    mode: 0444
+
+- name: nginx - copy conf.d/ config directory
+  copy:
+    src: conf.d/  # trailing '/' -> directory contents
+    dest: /usr/local/etc/nginx/conf.d/
+
+- name: nginx - create sites/ directory
+  file:
+    path: /usr/local/etc/nginx/sites
+    state: directory
+
+- name: nginx - generate sites
+  include_tasks: nginx-gensites.yml
+
+- name: nginx - copy nginx.conf
+  copy:
+    src: nginx.conf
+    dest: /usr/local/etc/nginx/nginx.conf
+    # XXX: Validation runs aganist a temporary file, thus nginx fails to
+    #      include other config files!
+    #validate: "nginx -t -c %s"
+  notify: reload-nginx
+
+- name: nginx - check configuration
+  command: nginx -t
+
+- name: nginx - enable and start
+  command: rcenable nginx
+
+- name: newsyslog - nginx log rotation
+  blockinfile:
+    path: /etc/newsyslog.conf
+    marker: '# {mark} ANSIBLE MANAGED - nginx'
+    block: |
+      /var/log/nginx/access.log		644  7	   *	@T00  Z    /var/run/nginx.pid
+      /var/log/nginx/error.log		644  7	   *	@T00  Z    /var/run/nginx.pid
+
+- name: acme - copy scripts
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/etc/acme/{{ item | basename }}
+    mode: 0755
+  with_items:
+    - acme-client.sh
+    - deploy.sh
+
+- name: (local) acme - check account private key existence
+  become: false
+  stat:
+    path: "{{ playbook_dir }}/private/acme/privkey.pem"
+  delegate_to: localhost
+  register: stat_result
+
+- name: (local) acme - generate account private key (4096 bit)
+  become: false
+  command: >
+    openssl genrsa 
+    -out "{{ playbook_dir }}/private/acme/privkey.pem" 4096
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+
+- name: acme - copy account private key
+  copy:
+    src: "{{ playbook_dir }}/private/acme/privkey.pem"
+    dest: /usr/local/etc/acme/privkey.pem
+    mode: 0400
+
+- name: acme - create domain private directory
+  file:
+    path: /usr/local/etc/ssl/acme/private/
+    state: directory
+    mode: 0700
+
+# Credit: https://shasawas.wordpress.com/2016/05/23/how-to-loop-over-a-set-of-tasks-in-ansible/
+- name: acme - generate and copy domain private keys
+  include_tasks: acme-domainkey.yml domain={{ item.name }}
+  with_items: "{{ domains }}"
+
+- name: acme - generate domains.txt
+  template:
+    src: domains.txt.j2
+    dest: /usr/local/etc/acme/domains.txt
+
+- name: acme - create challenge directory
+  file:
+    path: /usr/local/www/acme/.well-known/acme-challenge
+    state: directory
+    group: www
+    recurse: true
+
+- name: nginx - force reload
+  command: rcreload nginx
+
+- name: acme - request domain certificates
+  command: sh /usr/local/etc/acme/acme-client.sh -e
+
+- name: nginx - re-generate sites
+  include_tasks: nginx-gensites.yml
+  notify: reload-nginx

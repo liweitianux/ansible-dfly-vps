@@ -8,6 +8,7 @@
     - basic
     - security
     - dns
+    - web
     - shadowsocks
 
 # vim: set ft=yaml sw=2: #
