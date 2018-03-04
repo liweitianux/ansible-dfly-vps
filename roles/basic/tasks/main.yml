@@ -33,6 +33,11 @@
     state: touch
     mode: 0600
 
+- name: csh - install /etc/csh.cshrc
+  copy:
+    src: csh.cshrc
+    dest: /etc/csh.cshrc
+
 - name: pkg - disable repo auto update
   lineinfile:
     path: /usr/local/etc/pkg.conf
