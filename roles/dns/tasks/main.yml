@@ -66,6 +66,7 @@
 - name: NSD - get the list of zone files
   set_fact:
     zonefiles: "{{ lookup('fileglob', '../templates/zones/*.j2', wantlist=True) }}"
+  tags: zones
 
 - debug: var=zonefiles
 
@@ -73,6 +74,7 @@
   include_tasks: nsd-zone.yml zonefile={{ item }}
   with_items: "{{ zonefiles }}"
   notify: reload-nsd
+  tags: zones
 
 # NOTE: requires variable `zonefiles`
 - name: NSD - generate configuration

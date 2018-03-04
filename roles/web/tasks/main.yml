@@ -136,3 +136,4 @@
 - name: nginx - re-generate sites
   include_tasks: nginx-gensites.yml
   notify: reload-nginx
+  tags: sites
