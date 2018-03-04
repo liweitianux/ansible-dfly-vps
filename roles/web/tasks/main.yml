@@ -17,7 +17,7 @@
 - name: (local) ssl/tls - generate dhparam (4096 bit)
   become: false
   command: >
-    openssl dhparam 
+    openssl dhparam
     -out "{{ playbook_dir }}/ssl/dhparam4096.pem" 4096
   delegate_to: localhost
   when: not stat_result.stat.exists
@@ -83,7 +83,7 @@
 - name: (local) acme - generate account private key (4096 bit)
   become: false
   command: >
-    openssl genrsa 
+    openssl genrsa
     -out "{{ playbook_dir }}/private/acme/privkey.pem" 4096
   delegate_to: localhost
   when: not stat_result.stat.exists
@@ -122,6 +122,16 @@
 
 - name: acme - request domain certificates
   command: sh /usr/local/etc/acme/acme-client.sh -e
+
+- name: acme - setup periodic tasks for cert renewal
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: "# {mark} ANSIBLE MANAGED - acme"
+    block: |
+      # Auto renew certificates with acme-client
+      weekly_acme_client_enable="YES"
+      weekly_acme_client_renewscript="/usr/local/etc/acme/acme-client.sh"
+      weekly_acme_client_deployscript="/usr/local/etc/acme/deploy.sh"
 
 - name: nginx - re-generate sites
   include_tasks: nginx-gensites.yml
