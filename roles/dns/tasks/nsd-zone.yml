@@ -1,0 +1,31 @@
+---
+- name: var - set domain
+  set_fact:
+    domain: "{{ zonefile | basename | regex_replace('\\.zone\\.j2', '') }}"
+
+- name: var - set domain_keyfile
+  set_fact:
+    domain_keyfile: /usr/local/etc/mail/dkim/{{ domain }}-{{ mail.dkim.selector }}.pem
+
+- name: dkim - check domain key existence
+  stat:
+    path: "{{ domain_keyfile }}"
+  register: stat_result
+
+- name: dkim - slurp domain key from the remote machine
+  slurp:
+    src: "{{ domain_keyfile }}"
+  # NOTE: get the contents with `{{ slurp_result['content'] | b64decode }}`
+  register: slurp_result
+  when: stat_result.stat.exists
+
+- name: var - set domain_key
+  set_fact:
+    domain_key: "{{ slurp_result['content'] | b64decode }}"
+  when: stat_result.stat.exists
+
+- name: NSD - generate zone files
+  template:
+    src: "{{ zonefile }}"
+    dest: "/usr/local/etc/nsd/zones/{{ domain }}.zone"
+    validate: "nsd-checkzone {{ domain }} %s"

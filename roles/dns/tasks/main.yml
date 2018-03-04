@@ -58,34 +58,21 @@
   command: nsd-control-setup
   when: not stat_result.stat.exists
 
+- name: NSD - create zones directory
+  file:
+    path: /usr/local/etc/nsd/zones
+    state: directory
+
 - name: NSD - get the list of zone files
   set_fact:
     zonefiles: "{{ lookup('fileglob', '../templates/zones/*.j2', wantlist=True) }}"
 
 - debug: var=zonefiles
 
-- name: NSD - create zones directory
-  file:
-    path: /usr/local/etc/nsd/zones
-    state: directory
-
 - name: NSD - generate zone files
-  vars:
-    domain: "{{ item | basename | regex_replace('\\.zone\\.j2', '') }}"
-  template:
-    src: "{{ item }}"
-    dest: "/usr/local/etc/nsd/zones/{{ domain }}.zone"
-    # XXX: `validate` doesn't work with `with_items`???
-    validate: "nsd-checkzone {{ domain }} %s"
+  include_tasks: nsd-zone.yml zonefile={{ item }}
   with_items: "{{ zonefiles }}"
   notify: reload-nsd
-
-# XXX: the above `validate` doesn't work with `with_items`???
-- name: NSD - check zone files
-  vars:
-    domain: "{{ item | basename | regex_replace('\\.zone\\.j2', '') }}"
-  command: "nsd-checkzone {{ domain }} /usr/local/etc/nsd/zones/{{ domain }}.zone"
-  with_items: "{{ zonefiles }}"
 
 # NOTE: requires variable `zonefiles`
 - name: NSD - generate configuration
