@@ -1,0 +1,48 @@
+---
+- name: install packages
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - postfix
+    - dovecot
+    - opendkim
+
+- name: dkim - create directory
+  file:
+    path: /usr/local/etc/mail/dkim
+    state: directory
+
+- name: dkim - generate domain keys
+  include_tasks: dkim-genkey.yml domain={{ item }}
+  with_items: "{{ mail.domains }}"
+
+- name: postfix - set as mailer/MTA
+  file:
+    path: /etc/mail/mailer.conf
+    src: /etc/mail/mailer.conf.postfix
+    state: link
+    force: true
+
+- name: postfix - enable postfix and disable sendmail
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - postfix"
+    block: |
+      postfix_enable="YES"
+      # Completely disable sendmail(8) in favor of Postfix
+      sendmail_enable="NO"
+      sendmail_submit_enable="NO"
+      sendmail_outbound_enable="NO"
+      sendmail_msp_queue_enable="NO"
+
+- name: postfix - disable sendmail periodic tasks
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: "# {mark} ANSIBLE MANAGED - postfix"
+    block: |
+      # Disable sendmail(8) tasks in favor of Postfix
+      daily_clean_hoststat_enable="NO"
+      daily_status_mail_rejects_enable="NO"
+      daily_status_include_submit_mailq="NO"
+      daily_submit_queuerun="NO"

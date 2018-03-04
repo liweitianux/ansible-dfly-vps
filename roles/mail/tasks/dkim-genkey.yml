@@ -1,0 +1,25 @@
+---
+- set_fact:
+    domain_keyfile: "{{ playbook_dir }}/private/dkim/{{ domain }}-{{ mail.dkim.selector }}.pem"
+
+- name: (local) dkim - check domain private key existence
+  become: false
+  stat:
+    path: "{{ domain_keyfile }}"
+  delegate_to: localhost
+  register: stat_result
+
+- name: (local) dkim - generate domain private key
+  become: false
+  command: >
+    openssl genrsa 
+    -out "{{ domain_keyfile }}" "{{ mail.dkim.bits }}"
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+
+- name: dkim - copy domain private key
+  copy:
+    src: "{{ domain_keyfile }}"
+    dest: /usr/local/etc/mail/dkim/{{ domain_keyfile | basename }}
+    group: mailnull
+    mode: 0440
