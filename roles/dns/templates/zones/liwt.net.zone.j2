@@ -51,6 +51,8 @@ mail        IN  AAAA    {{ network.ipv6.address }}
 @           IN  TXT     "v=spf1 mx -all"
 @           IN  TXT     "google-site-verification={{ mail['google-site-verification'][domain] }}"
 _dmarc      IN  TXT     "v=DMARC1; p={{ mail.dmarc.p }}; sp={{ mail.dmarc.sp }}; pct={{ mail.dmarc.pct }}; aspf={{ mail.dmarc.aspf }}; rua=mailto:{{ mail.dmarc.rua[domain] }};"
-{{ mail.dkim.selector }}._domainkey  IN  TXT  "v=DKIM1; k=rsa; s={{ mail.dkim.selector }}; p=???"
+{% if domain_key is defined %}
+{{ domain_key | dkim_record(selector=mail.dkim.selector) | join("\n") }}
+{% endif %}
 
 ; vim: set ft=bindzone:

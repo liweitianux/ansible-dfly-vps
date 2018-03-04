@@ -37,6 +37,8 @@ www         IN  CNAME   @
 @           IN  TXT     "v=spf1 mx -all"
 @           IN  TXT     "google-site-verification={{ mail['google-site-verification'][domain] }}"
 _dmarc      IN  TXT     "v=DMARC1; p={{ mail.dmarc.p }}; sp={{ mail.dmarc.sp }}; pct={{ mail.dmarc.pct }}; aspf={{ mail.dmarc.aspf }}; rua=mailto:{{ mail.dmarc.rua[domain] }};"
-{{ mail.dkim.selector }}._domainkey  IN  TXT  "v=DKIM1; k=rsa; s={{ mail.dkim.selector }}; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu7LZbXj5HBjT5yoMCnCd5eBLBZ1s/WP0hPQSignjEu4pCtOsPf7f/knhDDD7eMOSlOAa91Dq6e8B0aNKfV2m7e88SvHLnWVhH+kUNIdSQRTrTL6Pt1WAH0XjgDcd0f2MB+ho5GIeRJnLWHoRtrSUoBKgMxnvW8aco/Z/z0/qn5Tcsrz7wP/W7c/eX38SRuanrKUVnE8FqvvshZzaPfqe46WrqKDI6mfeYa0up/1ikUWgAHKVZEXTUCPVBUXxHbyK7a6MgZW+BYkYEeypMnYViq9k+TIHNNjlGbOLXqujn2j/L0r7ORjZX16C1qNf54qvMeklDK1+8KW872F6s+kVKwIDAQAB"
+{% if domain_key is defined %}
+{{ domain_key | dkim_record(selector=mail.dkim.selector) | join("\n") }}
+{% endif %}
 
 ; vim: set ft=bindzone:
