@@ -1,0 +1,47 @@
+{% set domain = "liwt.net" %}
+#
+# nginx/sites: liwt.git.conf
+# Website: git.{{ domain }}
+# Share/publish projects (git repositories) using `cgit`.
+#
+# Refernce:
+# [1] ArchWiki - cgit
+#     https://wiki.archlinux.org/index.php/Cgit
+#
+#
+# Aaron LI
+# 2017-06-18
+#
+
+{% if domains_hascert[domain] %}
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  git.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Projects (git repositories) location
+    root         /usr/local/www/cgit;
+    try_files    $uri @cgit;
+
+    location @cgit {
+        # Require `www/uwsgi` package and configurations in `/etc/rc.conf`.
+        include          uwsgi_params;
+        # modifier1: 9 - size of CGI block vars (HTTP request body excluded)
+        uwsgi_modifier1  9;
+        uwsgi_pass       unix:/var/run/uwsgi-cgit.sock;
+    }
+
+    location /static/ {
+        root  /home/www/git/;
+    }
+
+    error_page  500 502 503 504 /50x.html;
+    location = /50x.html {
+        root  /usr/local/www/nginx-dist;
+    }
+}
+{% endif %}

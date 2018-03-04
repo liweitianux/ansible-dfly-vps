@@ -1,0 +1,102 @@
+{% set domain = "233233.xyz" %}
+#
+# nginx/sites: reverse proxy to the Chinese Wikipedia:
+# * zw.{{ domain }}    -> zh.wikipedia.org
+# * zw.{{ domain }}/m/ -> zh.m.wikipedia.org
+#
+#
+# Aaron LI
+# 2017-05-23
+#
+
+{% if domains_hascert[domain] %}
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  zw.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Enable caching
+    #proxy_cache  CACHE;
+
+    # Replace cookie domain
+    proxy_cookie_domain  wikipedia.org  $host;
+
+    # Hide some upstream headers to avoid duplicates/overrideing
+    proxy_hide_header  Strict-Transport-Security;
+    proxy_hide_header  Content-Security-Policy;
+    proxy_hide_header  X-Frame-Options;
+    proxy_hide_header  X-XSS-Protection;
+    proxy_hide_header  X-Content-Type-Options;
+    proxy_hide_header  Referrer-Policy;
+
+    # Substitute links in contents
+    # NOTE: Require to set Accept-Encoding="" header in order to request
+    #       *uncompressed* data from upstream, otherwise won't work!
+    sub_filter_types  text/css text/javascript application/json;
+    sub_filter_once   off;
+    {% block sub_filter_common %}
+    sub_filter  //zh.wikipedia.org/    //$host/;
+    sub_filter  //zh.m.wikipedia.org/  //$host/m/;
+    {% endblock %}
+
+    # Reverse proxy to zh.wikipedia.org
+    location / {
+        proxy_pass           https://zh.wikipedia.org;
+
+        # Handle the redirection to the mobile version
+        proxy_redirect       default;
+        proxy_redirect       https://zh.m.wikipedia.org/ /m/;
+
+        # NOTE: The `Host` header cannot be set to `$host`, otherwise,
+        #       we get error "Domain not configured" from Wikipedia.
+        proxy_set_header  Host               zh.wikipedia.org;
+        proxy_set_header  Referer            https://zh.wikipedia.org;
+        {% block proxy_set_header_common %}
+        proxy_set_header  User-Agent         $http_user_agent;
+        proxy_set_header  X-Real-IP          $remote_addr;
+        proxy_set_header  X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header  X-Forwarded-Proto  $scheme;
+        proxy_set_header  Cookie             "";
+        proxy_set_header  Accept-Encoding    "";
+        proxy_set_header  Accept-Language    $http_accept_language;
+        {% endblock %}
+    }
+
+    # Reverse proxy to zh.m.wikipedia.org
+    location ^~ /m/ {
+        # NOTE: This `proxy_pass` directive is specified WITH an URI
+        #       (i.e., the trailing `/` here), then when a request is
+        #       passed to the server, the part of a *normalized*
+        #       request URI matching the location is replaced by the
+        #       URI specified in the directive.
+        # Reference: http://nginx.org/r/proxy_pass
+        proxy_pass           https://zh.m.wikipedia.org/;
+
+        # Handle the redirection to the desktop version
+        proxy_redirect       default;
+        proxy_redirect       https://zh.wikipedia.org/ /;
+
+        proxy_set_header  Host               zh.m.wikipedia.org;
+        proxy_set_header  Referer            https://zh.m.wikipedia.org;
+        {{ self.proxy_set_header_common() }}
+
+        # All "sub_filter" directives from upper level must be copied here!
+        {{ self.sub_filter_common() }}
+        sub_filter  /wiki/  /m/wiki/;
+    }
+
+    # Forbid spider
+    if ($http_user_agent ~* "qihoobot|Baiduspider|Googlebot|Googlebot-Mobile|Googlebot-Image|Mediapartners-Google|Adsbot-Google|Feedfetcher-Google|Yahoo! Slurp|Yahoo! Slurp China|YoudaoBot|Sosospider|Sogou spider|Sogou web spider|MSNBot|ia_archiver|Tomato Bot") {
+        return  403;
+    }
+
+    location /robots.txt {
+        default_type  text/plain;
+        return  200  "User-agent: *\nDisallow: /\n";
+    }
+}
+{% endif %}

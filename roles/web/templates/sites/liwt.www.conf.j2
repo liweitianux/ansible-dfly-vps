@@ -1,0 +1,109 @@
+{% set domain = "liwt.net" %}
+#
+# nginx/sites: liwt.www.conf
+# Main website: {{ domain }}
+#
+# Refernce
+# --------
+# * Nginx - Converting rewrite rules
+#   https://nginx.org/en/docs/http/converting_rewrite_rules.html
+# * StackOverflow - Nginx no-www to www and www to no-www
+#   http://stackoverflow.com/a/7958540
+# * StackOverflow - Remove 'www' and redirect to 'https' with nginx
+#   http://stackoverflow.com/a/258424
+# * Nginx Caching | Servers for Hackers
+#   https://serversforhackers.com/nginx-caching/
+#
+#
+# Aaron LI
+#
+
+{% if domains_hascert[domain] %}
+# Separate server block to redirect www to no-www
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  www.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    return  301  $scheme://{{ domain }}$request_uri;
+}
+
+server {
+    listen            443 ssl http2 default_server;
+    listen       [::]:443 ssl http2;
+    server_name  {{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Website location
+    root   /home/www/www;
+    index  index.html;
+
+    location / {
+        try_files  $uri $uri/ $uri/index.html $uri.html =404;
+    }
+
+    location = /ip {
+        default_type  text/plain;
+        return  200  "$remote_addr\n";
+    }
+
+    location = /robots.txt {
+	allow          all;
+        log_not_found  off;
+        access_log     off;
+    }
+
+    error_page  403 /403.html;
+    error_page  404 /404.html;
+    error_page  500 502 503 504 /50x.html;
+    location = /50x.html {
+        root  /usr/local/www/nginx-dist;
+    }
+
+    ## Expire rules for static content [3]
+    # Feed
+    location ~* \.(?:rss|atom)$ {
+        expires     1h;
+        add_header  Cache-Control "public";
+    }
+    # Media: images, icons, video, audio
+    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp3|mp4|ogg|ogv|webm)$ {
+        expires     30d;
+        access_log  off;
+        add_header  Cache-Control "public";
+    }
+    # CSS and Javascript
+    location ~* \.(?:css|js)$ {
+        expires     30d;
+        access_log  off;
+        add_header  Cache-Control "public";
+    }
+
+    ## Block rules
+    # .git
+    location ~ /\.git {
+        deny           all;
+        log_not_found  off;
+        access_log     off;
+    }
+    # All hidden directories and files (begin with .)
+    location ~ /\. {
+        deny           all;
+        log_not_found  off;
+        access_log     off;
+    }
+    # Temporary files (end with ~)
+    location ~ ~$ {
+        deny           all;
+        log_not_found  off;
+        access_log     off;
+    }
+}
+{% endif %}

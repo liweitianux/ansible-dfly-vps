@@ -1,0 +1,164 @@
+{% set domain = "233233.xyz" %}
+#
+# nginx/sites: reverse proxy to Google Search (with images and webcache))
+#
+# Credit:
+# * Nginx rewrite append a parameter at the end of an URL
+#   https://serverfault.com/a/311660/387898
+# * https://github.com/tracycool/Reverse-Proxy-for-Google
+# * https://github.com/caiguanhao/nginx-bypass-gfw/blob/master/google.conf
+#
+# References:
+# * Google Custom Search - CSE parameters list
+#   https://developers.google.com/custom-search/json-api/v1/reference/cse/list
+#
+#
+# Aaron LI
+# 2017-05-23
+#
+
+{% if domains_hascert[domain] %}
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  g.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Enable caching
+    #proxy_cache  CACHE;
+
+    # Tune buffer
+    proxy_buffer_size        64k;
+    proxy_buffers            4 128k;
+    proxy_busy_buffers_size  128k;
+
+    # Replace cookie domain
+    proxy_cookie_domain  google.com  $host;
+
+    # Hide some upstream headers to avoid duplicates/overrideing
+    proxy_hide_header  Strict-Transport-Security;
+    proxy_hide_header  Content-Security-Policy;
+    proxy_hide_header  X-Frame-Options;
+    proxy_hide_header  X-XSS-Protection;
+    proxy_hide_header  X-Content-Type-Options;
+    proxy_hide_header  Referrer-Policy;
+
+    # Substitute links in contents
+    # NOTE: Require to set Accept-Encoding="" header in order to request
+    #       *uncompressed* data from upstream, otherwise won't work!
+    sub_filter_types  text/css text/javascript application/json;
+    sub_filter_once   off;
+    sub_filter  //www.google.com/                  //$host/;
+    sub_filter  //apis.google.com/                 //$host/__gapis/;
+    sub_filter  //ajax.googleapis.com/             //$host/__gajax/;
+    sub_filter  //fonts.googleapis.com/            //$host/__gfonts/;
+    sub_filter  //www.gstatic.com/                 //$host/__gstatic/www/;
+    sub_filter  //ssl.gstatic.com/                 //$host/__gstatic/ssl/;
+    sub_filter  //encrypted-tbn0.gstatic.com/      //$host/__gstatic/enc-tbn0/;
+                # Google Images
+    sub_filter  //webcache.googleusercontent.com/  //$host/__gwebcache/;
+
+    # WARNING:
+    # The "proxy_set_header" directives are inherited from the previous
+    # level *if and only if* there are *no* such directives defined on
+    # the current level!
+
+    #
+    # Reverse proxy to Google search and its friends :-)
+    #
+    location / {
+        proxy_pass  https://www.google.com;
+
+        # These header need set explicitly, otherwise the browser will
+        # be redirected to Google's URL without proxy...
+        proxy_set_header  Host     www.google.com;
+        proxy_set_header  Referer  https://www.google.com;
+        # Set other necessary headers
+        # NOTE: Set Accept-Encoding="" to request *uncompressed* data
+        #       from upstream, otherwise "sub_filter" doesn't work!
+        # Credit: https://stackoverflow.com/a/36274259
+        {% block proxy_set_header_common %}
+        proxy_set_header  User-Agent         $http_user_agent;
+        proxy_set_header  X-Real-IP          $remote_addr;
+        proxy_set_header  X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header  X-Forwarded-Proto  $scheme;
+        proxy_set_header  Cookie             "";
+        proxy_set_header  Accept-Language    "en-US";
+        proxy_set_header  Accept-Encoding    "";
+        {% endblock %}
+
+        # Append "&gfe_rd=cr&gws_rd=cr" to disable country redirection.
+        # Append "&hl=en" to set interface language to English.
+        #
+        # "rewrite" matches against URL's *path* part only, which means
+        # "$1" will *not* contain the query string.  And Nginx appends
+        # original query string to the rewrite replacement by default.
+        #
+        # Credit: https://serverfault.com/a/311660/387898
+        rewrite  ^(.*)$  $1?gfe_rd=cr&gws_rd=cr&hl=en  break;
+    }
+
+    location ^~ /__gwebcache/ {
+        # ^~ will make location search stop here if matched.
+        proxy_pass  https://webcache.googleusercontent.com/;
+        # Note the trailing '/' above, which tells Nginx to strip the
+        # matched URI.
+        # Credit: https://serverfault.com/a/725433/387898
+
+        proxy_set_header  Host     webcache.googleusercontent.com;
+        proxy_set_header  Referer  https://webcache.googleusercontent.com;
+        # NOTE: The upper level "proxy_set_header" directives are *not*
+        #       inherited since there are such directives on this level!
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gstatic/ssl/ {
+        proxy_pass        https://ssl.gstatic.com/;
+        proxy_set_header  Host     ssl.gstatic.com;
+        proxy_set_header  Referer  https://ssl.gstatic.com;
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gstatic/www/ {
+        proxy_pass        https://www.gstatic.com/;
+        proxy_set_header  Host     ssl.gstatic.com;
+        proxy_set_header  Referer  https://ssl.gstatic.com;
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gstatic/enc-tbn0/ {
+        proxy_pass        https://encrypted-tbn0.gstatic.com/;
+        proxy_set_header  Host     encrypted-tbn0.gstatic.com;
+        proxy_set_header  Referer  https://encrypted-tbn0.gstatic.com;
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gapis/ {
+        proxy_pass        https://apis.google.com/;
+        proxy_set_header  Host     apis.google.com;
+        proxy_set_header  Referer  https://apis.google.com;
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gfonts/ {
+        proxy_pass        https://fonts.googleapis.com/;
+        proxy_set_header  Host     fonts.googleapis.com;
+        proxy_set_header  Referer  https://fonts.googleapis.com;
+        {{ self.proxy_set_header_common() }}
+    }
+    location ^~ /__gajax/ {
+        proxy_pass        https://ajax.googleapis.com/;
+        proxy_set_header  Host     ajax.googleapis.com;
+        proxy_set_header  Referer  https://ajax.googleapis.com;
+        {{ self.proxy_set_header_common() }}
+    }
+
+    # Forbid spider
+    if ($http_user_agent ~* "qihoobot|Baiduspider|Googlebot|Googlebot-Mobile|Googlebot-Image|Mediapartners-Google|Adsbot-Google|Feedfetcher-Google|Yahoo! Slurp|Yahoo! Slurp China|YoudaoBot|Sosospider|Sogou spider|Sogou web spider|MSNBot|ia_archiver|Tomato Bot") {
+        return  403;
+    }
+
+    location /robots.txt {
+        default_type  text/plain;
+        return  200  "User-agent: *\nDisallow: /\n";
+    }
+}
+{% endif %}

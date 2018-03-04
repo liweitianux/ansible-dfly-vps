@@ -1,0 +1,51 @@
+{% set domain = "liwt.net" %}
+#
+# nginx/sites: aaronly.radicale.conf
+# CalDAV/CardDAV server: caldav.{{ domain }}, carddav.{{ domain }}
+#
+# Aaron LI
+# 2017-04-27
+#
+
+{% if domains_hascert[domain] %}
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  caldav.{{ domain }}  carddav.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Reverse proxy to Radicale
+    location / {
+        # Auth through HTTP
+        auth_basic            "Radicale ...";
+        auth_basic_user_file  /usr/local/etc/nginx/auth/radicale.passwd;
+
+        # XXX: Hack to support "username@domain"-style logins
+        if ($remote_user ~ ^(?<user_>[^@/]+)(@[^/]+)?$) {
+            set  $username  $user_;
+        }
+
+        # When a reverse proxy is used, the path at which Radicale is
+        # available must be provided via the "X-Script-Name" header.
+        # The proxy must remove the location from the URL path that is
+        # forwarded to Radicale.
+        # http://radicale.org/proxy/
+        #
+        #proxy_pass        http://127.0.0.1:5232/;  # Note the trailing "/"
+        #proxy_set_header  Host               $host;
+        #proxy_set_header  X-Real-IP          $remote_addr;
+        #proxy_set_header  X-Forwarded-For    $proxy_add_x_forwarded_for;
+        #proxy_set_header  X-Forwarded-Proto  $scheme;
+        #proxy_set_header  X-Remote-User      $username;
+
+        # WSGI interface: http://radicale.org/wsgi/
+        include      uwsgi_params;
+        # Require to set 'auth/type' to 'remote_user' in config file
+        uwsgi_param  REMOTE_USER      $username;
+        uwsgi_pass   unix:/var/run/uwsgi-radicale.sock;
+    }
+}
+{% endif %}

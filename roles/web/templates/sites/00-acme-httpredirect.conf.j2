@@ -1,0 +1,26 @@
+#
+# Nignx/sites: 00-acme-httpredirect.conf
+# Provide ACME challenges to issue certificate from Let's Encrypt,
+# and redirect HTTP to HTTPs.
+#
+# Aaron LI
+#
+
+server {
+    listen       80 default_server;
+    listen  [::]:80 default_server;
+    server_name  _;
+
+    location ^~ /.well-known/acme-challenge/ {
+        default_type  text/plain;
+        root          /usr/local/www/acme;
+    }
+    location = /.well-known/acme-challenge/ {
+        return  404;
+    }
+
+    # Redirect to HTTPS
+    location / {
+        return  301  https://$host$request_uri;
+    }
+}
