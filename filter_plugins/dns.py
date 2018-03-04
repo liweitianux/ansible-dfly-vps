@@ -9,7 +9,6 @@ The templating is done on the local/control machine!
 
 import os
 import datetime
-import random
 import shlex
 import subprocess
 
@@ -49,15 +48,7 @@ def next_serial(fqdn):
     if cmd_path is None:
         raise Exception("Cannot find %s" % cmd)
 
-    def query_nameservers(fqdn, ns=None):
-        return [line[0] for line in run_query(cmd_path, "NS", fqdn, ns)]
-
-    # Get a registry nameserver.
-    reg_ns = random.choice(query_nameservers(".".join(fqdn.split(".")[1:])))
-
-    nss = query_nameservers(fqdn, reg_ns)
-    random.shuffle(nss)
-
+    nss = [line[0] for line in run_query(cmd_path, "NS", fqdn)]
     current_serial = None
     for ns in nss:
         try:
