@@ -12,6 +12,10 @@
 SERVICES="nginx dovecot postfix"
 
 for srv in ${SERVICES}; do
-    echo "ACME deploy: restarting ${srv} ..."
-    service ${srv} restart
+    if service ${srv} status >/dev/null 2>&1; then
+        echo "ACME deploy: restarting ${srv} ..."
+        service ${srv} restart
+    else
+        echo "ACME deploy: service ${srv} not running"
+    fi
 done
