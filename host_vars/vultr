@@ -18,10 +18,14 @@ network:
 
 domains:
   - name: liwt.net
+    # sub-domains for which to request certificates
     sub:
       - mail
       - www
       - git
+  - name: aaronly.me
+    sub:
+      - www
   - name: 233233.xyz
     sub:
       - www
