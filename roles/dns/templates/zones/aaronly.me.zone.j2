@@ -1,16 +1,15 @@
 ; -*- mode: dns; -*-
 ; {{ ansible_managed }}
-{% set domain = "aaronly.me" %}
 {% set hostmaster = "hostmaster." + network.domain %}
 $ORIGIN     {{ domain }}.
-$TTL        1h
+$TTL        {{ dns.ttl }}
 
 @           IN  SOA     {{ nameservers[0].ns[0] }}.  {{ hostmaster }}.  (
                         {{ domain | next_serial }}  ; serial number
-                        1d          ; refresh
-                        2h          ; retry
-                        4w          ; expire
-                        1h          ; minimum
+                        {{ dns.refresh }}  ; refresh
+                        {{ dns.retry }}  ; retry
+                        {{ dns.expire }}  ; expire
+                        {{ dns.minimum }}  ; minimum
                         )
 
 ; Name servers

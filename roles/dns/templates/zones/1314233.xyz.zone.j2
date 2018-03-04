@@ -1,15 +1,14 @@
-{% set domain = "1314233.xyz" %}
 {% set hostmaster = "hostmaster." + network.domain %}
 ; {{ ansible_managed }}
 $ORIGIN     {{ domain }}.
-$TTL        1h
+$TTL        {{ dns.ttl }}
 
 @           IN  SOA     {{ nameservers[0].ns[0] }}.  {{ hostmaster }}.  (
                         {{ domain | next_serial }}  ; serial number
-                        1d          ; refresh
-                        2h          ; retry
-                        4w          ; expire
-                        1h          ; minimum TTL
+                        {{ dns.refresh }}  ; refresh
+                        {{ dns.retry }}  ; retry
+                        {{ dns.expire }}  ; expire
+                        {{ dns.minimum }}  ; minimum
                         )
 
 {% for server in nameservers %}
