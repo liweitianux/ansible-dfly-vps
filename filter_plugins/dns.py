@@ -2,6 +2,9 @@
 
 """
 Custom Ansible template filters for DNS management.
+
+WARNING:
+The templating is done on the local/control machine!
 """
 
 import os
@@ -74,6 +77,47 @@ def next_serial(fqdn):
         return str(int(current_serial) + 1)
 
 
+def dkim_record(privkey, selector="mail"):
+    """
+    Generate the DKIM record from the given private key.
+
+    The long key strings is NOT joined due to the length limit of a
+    DNS record.
+
+    Example
+    -------
+    mail._domainkey	IN	TXT	( "v=DKIM1; k=rsa; s=email; "
+        "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu7LZbXj5HBjT5yoMCnCd"
+        "5eBLBZ1s/WP0hPQSignjEu4pCtOsPf7f/knhDDD7eMOSlOAa91Dq6e8B0aNKfV2m"
+        "7e88SvHLnWVhH+kUNIdSQRTrTL6Pt1WAH0XjgDcd0f2MB+ho5GIeRJnLWHoRtrSU"
+        "oBKgMxnvW8aco/Z/z0/qn5Tcsrz7wP/W7c/eX38SRuanrKUVnE8FqvvshZzaPfqe"
+        "46WrqKDI6mfeYa0up/1ikUWgAHKVZEXTUCPVBUXxHbyK7a6MgZW+BYkYEeypMnYV"
+        "iq9k+TIHNNjlGbOLXqujn2j/L0r7ORjZX16C1qNf54qvMeklDK1+8KW872F6s+kV"
+        "KwIDAQAB" )
+    """
+    cmd = ['openssl', 'rsa', '-pubout', '-outform', 'PEM']
+    p = subprocess.Popen(cmd, universal_newlines=True,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    pubkey, stderr = p.communicate(privkey)
+    if p.returncode:
+        raise Exception("openssl failed to extract the public key")
+
+    lines = [l for l in pubkey.split('\n')
+             if len(l) > 0 and l[0] != '-']
+    lines[0] = 'p=' + lines[0]
+    lines = ['\t\t"' + l + '"' for l in lines]
+    lines[-1] += ' )'
+    record = [
+        selector+'._domainkey\tIN\tTXT\t( "v=DKIM1; k=rsa; s=email; "'
+    ] + lines
+    return record
+
+
 class FilterModule(object):
     def filters(self):
-        return {"next_serial": next_serial}
+        return {
+            "next_serial": next_serial,
+            "dkim_record": dkim_record,
+        }
