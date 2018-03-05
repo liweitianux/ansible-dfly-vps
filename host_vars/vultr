@@ -58,6 +58,11 @@ mail:
   domains:
     - liwt.net
     - aaronly.me
+  # Virtual mail user for local delivery (e.g., by Dovecot))
+  user:
+    name: vmail
+    id: 5000
+    home: /home/vmail
   dkim:
     selector: default
     bits: 2048

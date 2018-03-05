@@ -10,19 +10,19 @@
     - dovecot-pigeonhole
 
 - name: group - check vmail group
-  command: pw groupshow vmail
+  command: pw groupshow {{ mail.user.name }}
   register: pw_cmd
   ignore_errors: true
   changed_when: false
   tags: vmail
 
 - name: group - create vmail group
-  command: pw groupadd vmail -g 5000
+  command: pw groupadd {{ mail.user.name }} -g {{ mail.user.id }}
   when: pw_cmd.rc != 0
   tags: vmail
 
 - name: user - check vmail user
-  command: pw usershow vmail
+  command: pw usershow {{ mail.user.name }}
   register: pw_cmd
   ignore_errors: true
   changed_when: false
@@ -30,9 +30,9 @@
 
 - name: user - create vmail user
   command: >
-    pw useradd vmail
-    -u 5000 -g vmail
-    -m -M 0700 -d "/home/vmail"
+    pw useradd {{ mail.user.name }}
+    -u {{ mail.user.id }} -g {{ mail.user.name }}
+    -m -M 0700 -d {{ mail.user.home }}
     -s /sbin/nologin
     -c "Virtual Mail User"
   when: pw_cmd.rc != 0
