@@ -22,17 +22,22 @@
 - name: opendkim - generate tables
   template:
     src: "{{ item }}"
-    dest: /usr/local/etc/mail/dkim/{{ item | basename | regex_replace('\\.zone\\.j2', '') }}
+    dest: /usr/local/etc/mail/dkim/{{ item | basename | regex_replace('\.j2', '') }}
   with_items:
     - dkim/KeyTable.j2
     - dkim/SigningTable.j2
+  notify: reload-opendkim
   tags: opendkim
 
 - name: opendkim - generate config file
   template:
     src: opendkim.conf.j2
     dest: /usr/local/etc/mail/opendkim.conf
+  notify: reload-opendkim
   tags: opendkim
+
+- name: opendkim - enable and start
+  command: rcenable milter-opendkim
 
 - name: postfix - set as mailer/MTA
   file:
