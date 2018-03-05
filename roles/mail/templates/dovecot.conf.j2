@@ -1,0 +1,477 @@
+#
+# /usr/local/etc/dovecot/dovecot.conf
+# Dovecot configuration file
+#
+# References
+# ----------
+# * Dovecot - Quick Configuration
+#   http://wiki2.dovecot.org/QuickConfiguration
+# * Dovecot - SSL Configuration
+#   https://wiki.dovecot.org/SSL/DovecotConfiguration
+# * Multiple domains and virtual users (Postfix/Dovecot/SASL)
+#   http://void.ideabite.org/2013/07/28/multiple-domains-and-virtual-users/
+#
+# Aaron LI
+#
+
+{% set mydomain = mail.domains[0] %}
+
+# NOTE
+# ----
+# "doveconf -n" command gives a clean output of the changed settings.
+# Use it instead of copy/pasting files when posting to the mailing list.
+
+# Protocols want to be serving.
+protocols = imap
+
+# A comma separated list of IPs or hosts where to listen.
+#   - "*" listens in all IPv4 interfaces
+#   - "::" listens in all IPv6 interfaces
+listen = *, ::
+
+
+##
+## 10-auth.conf
+## Authentication process, password and user database
+##
+
+# Disable LOGIN command and all other plaintext authentications unless
+# SSL/TLS is used (LOGINDISABLED capability).
+disable_plaintext_auth = yes
+
+# Space separated list of realms for SASL authentication mechanisms
+# that need them.  You can leave it empty if you don't want to support
+# multiple realms.
+#auth_realms =
+
+# Require a valid SSL client certificate or the authentication fails.
+#auth_ssl_require_client_cert = no
+
+# Take the username from client's SSL certificate, using 
+# X509_NAME_get_text_by_NID() which returns the subject's DN's
+# CommonName. 
+#auth_ssl_username_from_cert = no
+
+# Space separated list of wanted authentication mechanisms:
+#   plain login digest-md5 cram-md5 ntlm rpa apop anonymous
+#   gssapi otp skey gss-spnego
+# NOTE: See also disable_plaintext_auth setting.
+auth_mechanisms = plain login
+
+# The password database used by Dovecot to authenticate users.
+#
+# See: https://wiki2.dovecot.org/PasswordDatabase
+#
+# Generate the password with:
+#     $ doveadm pw -s SSHA512
+#
+passdb {
+    driver = passwd-file
+    args = scheme=SSHA512 username_format=%u /usr/local/etc/dovecot/passwd
+
+    # This is not a database for denied users.
+    deny = no
+    # This is not a database for master users, which can log in as
+    # other users.
+    master = no
+    pass = no
+    skip = never
+    result_failure = continue
+    result_internalfail = continue
+    result_success = return-ok
+}
+
+# User database, which will be looked up to obtain user's information
+# after the user has been successfully authenticated.  The userdb lookup
+# is also done by LDA to find out how to deliver mails for the user.
+#
+# Dovecot doesn't need to verify the username or the password.
+#
+# See: https://wiki2.dovecot.org/UserDatabase
+#
+userdb {
+    driver = static
+    #
+    # Set 'allow_all_users=yes' will make Dovecot ignore the user lookup
+    # from the userdb and entirely rely on the passdb lookup.  Therefore,
+    # the username may be repeated to have multiple passwords, which can
+    # be utilized to achieve device-specific passwords.
+    #
+    args = allow_all_users=yes
+}
+
+
+##
+## 10-logging.conf
+## Log destination, verbosity, and debugging.
+##
+
+# Log unsuccessful authentication attempts and the reasons why they
+# failed.
+auth_verbose = yes
+
+# In case of password mismatches, log the attempted password.
+# Valid values are no, plain and sha1.
+# sha1 can be useful for detecting brute force password attempts vs.
+# user simply trying the same password over and over again.
+auth_verbose_passwords = sha1
+
+# Space-separated list of elements we want to log.  The elements which
+# have a non-empty variable value are joined together to form a
+# comma-separated string.
+#
+# Since we set up device-specific passwords, therefore the full
+# username (%u) is the authenticated user after replacing by the auth
+# process.  Use %{orig_user}, which expands to the original username
+# the client sent before any changes by auth process, to keep track of
+# the actual usages.
+#
+login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e %c
+
+
+##
+## 10-mail.conf
+## Mailbox settings and mail handling.
+##
+
+# Home directories for virtual users, where Dovecot can save user-specific
+# files.  Home directory shouldn't be the same as mail directory with mbox
+# or Maildir formats (but with dbox/obox it's fine).
+mail_home = {{ mail.user.home }}/%d/%n
+
+# Location for users' mailboxes. The default is empty, which means that Dovecot
+# tries to find the mailboxes automatically. This won't work if the user
+# doesn't yet have any mail, so you should explicitly tell Dovecot the full
+# location.
+#
+# If you're using mbox, giving a path to the INBOX file (eg. /var/mail/%u)
+# isn't enough. You'll also need to tell Dovecot where the other mailboxes are
+# kept. This is called the "root mail directory", and it must be the first
+# path given in the mail_location setting.
+#
+# There are a few special variables you can use, eg.:
+#
+#   %u - username
+#   %n - user part in user@domain, same as %u if there's no domain
+#   %d - domain part in user@domain, empty if there's no domain
+#   %h - home directory
+#
+# See doc/wiki/Variables.txt for full list.
+#
+mail_location = maildir:{{ mail.user.home }}/%d/%n/mail:LAYOUT=fs
+
+# System user and group used to access mails.  If you use multiple,
+# userdb can override these by returning uid or gid fields.  You can
+# use either numbers or names.
+mail_uid = {{ mail.user.name }}
+mail_gid = {{ mail.user.name }}
+
+# Use the dedicated virtual mail user to restrict the temporary
+# privileged operations.
+mail_privileged_group = {{ mail.user.name }}
+
+# Only allow Dovecot use the dedicated virtual mail user.
+first_valid_uid = {{ mail.user.id }}
+last_valid_uid  = {{ mail.user.id }}
+first_valid_gid = {{ mail.user.id }}
+last_valid_gid  = {{ mail.user.id }}
+
+# Mailbox list indexes can be used to optimize IMAP STATUS commands.
+# They are also required for IMAP NOTIFY extension to be enabled.
+mailbox_list_index = yes
+
+# Assume Dovecot is the only MUA accessing Maildir:
+# Scan cur/ directory only when its mtime changes unexpectedly or when
+# we can't find the mail otherwise.
+maildir_very_dirty_syncs = no
+
+# If enabled, Dovecot doesn't use the S=<size> in the Maildir filenames
+# for getting the mail's physical size, except when recalculating
+# Maildir++ quota.  This can be useful in systems where a lot of the
+# Maildir filenames have a broken size.  The performance hit for
+# enabling this is very small.
+#maildir_broken_filename_sizes = no
+
+# If you need to set multiple mailbox locations or want to change default
+# namespace settings, you can do it by defining namespace sections.
+#
+namespace inbox {
+  # There can be only one INBOX, and this setting defines which namespace
+  # has it.
+  inbox = yes
+
+  # 15-mailboxes.conf
+  # Mailbox definitions
+  #
+  # Each mailbox is specified in a separate mailbox section.  The
+  # section name specifies the mailbox name.  If it has spaces, you can
+  # put the name "in quotes".  These sections can contain the following
+  # mailbox settings:
+  #
+  # auto:
+  #   Indicates whether the mailbox with this name is automatically
+  #   created implicitly when it is first accessed.  The user can also
+  #   be automatically subscribed to the mailbox after creation.  The
+  #   following values are defined for this setting:
+  # 
+  #     no        - Never created automatically.
+  #     create    - Automatically created, but no automatic subscription.
+  #     subscribe - Automatically created and subscribed.
+  #  
+  # special_use:
+  #   A space-separated list of SPECIAL-USE flags (RFC 6154) to use for
+  #   the mailbox.  There are no validity checks, so you could specify
+  #   anything you want in here, but it's not a good idea to use flags
+  #   other than the standard ones specified in the RFC:
+  #
+  #     \All      - This (virtual) mailbox presents all messages in the
+  #                 user's message store. 
+  #     \Archive  - This mailbox is used to archive messages.
+  #     \Drafts   - This mailbox is used to hold draft messages.
+  #     \Flagged  - This (virtual) mailbox presents all messages in the
+  #                 user's message store marked with the IMAP \Flagged
+  #                 flag.
+  #     \Junk     - This mailbox is where messages deemed to be junk
+  #                 mail are held.
+  #     \Sent     - This mailbox is used to hold copies of messages that
+  #                 have been sent.
+  #     \Trash    - This mailbox is used to hold messages that have been
+  #                 deleted.
+  #
+  # comment:
+  #   Defines a default comment or note associated with the mailbox.
+  #   This value is accessible through the IMAP METADATA mailbox entries
+  #   "/shared/comment" and "/private/comment". Users with sufficient
+  #   privileges can override the default value for entries with a custom
+  #   value.
+  #
+  mailbox Drafts {
+    special_use = \Drafts
+    # Automatically created and subscribed.
+    auto = subscribe
+  }
+  mailbox Junk {
+    special_use = \Junk
+    auto = subscribe
+  }
+  mailbox Trash {
+    special_use = \Trash
+    auto = subscribe
+  }
+  mailbox Sent {
+    special_use = \Sent
+    auto = subscribe
+  }
+
+  mailbox Archive {
+    special_use = \Archive
+    auto = subscribe
+  }
+
+  # If you have a virtual "All messages" mailbox:
+  #mailbox virtual/All {
+  #  special_use = \All
+  #  comment = All my messages
+  #}
+
+  # If you have a virtual "Flagged" mailbox:
+  #mailbox virtual/Flagged {
+  #  special_use = \Flagged
+  #  comment = All my flagged messages
+  #}
+}
+
+
+##
+## 10-master.conf
+##
+
+service imap-login {
+  inet_listener imap {
+    # Disable non-SSL IMAP!
+    port = 0
+  }
+
+  inet_listener imaps {
+    #port = 993
+    #ssl = yes
+  }
+}
+
+service auth {
+  # This userdb socket is typically used by dovecot-lda, doveadm,
+  # possibly imap process, etc.  Users that have full permissions to
+  # this socket are able to get a list of all usernames and get the
+  # results of everyone's userdb lookups.
+  #
+  # The default 0666 mode allows anyone to connect to the socket, but
+  # the userdb lookups will succeed only if the userdb returns an "uid"
+  # field that matches the caller process's UID.  Also if caller's uid
+  # or gid matches the socket's uid or gid the lookup succeeds.
+  # Anything else causes a failure.
+  unix_listener auth-userdb {
+    mode = 0600
+    user = {{ mail.user.name }}
+    group = {{ mail.user.name }}
+  }
+
+  # Postfix smtp-auth
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0660
+    user = postfix
+    group = postfix
+  }
+}
+
+
+##
+## 10-ssl.conf
+##
+
+# SSL/TLS support: yes, no, required.
+# NOTE: If only plaintext auth mechanisms enabled (e.g., "plain",
+# "login"), "ssl=yes" and "ssl=required" is equivalent.
+ssl = required
+
+# PEM encoded X.509 SSL/TLS certificate and private key.
+# They're opened before dropping root privileges, so preferred
+# permissions is: root:root, 0400.
+ssl_cert = </usr/local/etc/ssl/acme/{{ mydomain }}/fullchain.pem
+ssl_key = </usr/local/etc/ssl/acme/private/{{ mydomain }}.pem
+
+# DH parameters file.
+#ssl_dh = </usr/local/etc/ssl/dhparam4096.pem
+
+# DH parameters length to use. (version == 2.2)
+#
+# NOTE: to re-generate DH-parameters, first manually delete current
+#       parameters: "/var/db/dovecot/ssl-parameters.dat", and then
+#       restart Dovecot.
+#
+ssl_dh_parameters_length = 2048
+
+# PEM encoded trusted certificate authority.
+# Set this only if you intend to use "ssl_verify_client_cert=yes".
+# The file should contain the CA certificate(s) followed by the
+# matching CRL(s). (e.g. ssl_ca = </etc/ssl/certs/ca.pem)
+#ssl_ca = 
+
+# Request client to send a certificate.  If you also want to require
+# it, set "auth_ssl_require_client_cert=yes" in auth section.
+#ssl_verify_client_cert = no
+
+# Which field from certificate to use for username.  commonName and
+# x500UniqueIdentifier are the usual choices. You'll also need to set
+# "auth_ssl_username_from_cert=yes".
+#ssl_cert_username_field = commonName
+
+# SSL protocols to use: disable SSL, use TLS only!
+ssl_protocols = !SSLv3 !SSLv2
+
+# SSL ciphers to use
+ssl_cipher_list = EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES12
+
+# Prefer the server's order of ciphers over client's.
+ssl_prefer_server_ciphers = yes
+
+
+##
+## 15-lda.conf
+## LDA specific settings (also used by LMTP)
+##
+
+protocol lda {
+  # Space separated list of plugins to load
+  # (default is global mail_plugins).
+  mail_plugins = $mail_plugins sieve
+}
+
+
+##
+## 20-imap.conf
+## IMAP specific settings
+##
+
+# How long to wait between "OK Still here" notifications when client is
+# IDLEing.
+imap_idle_notify_interval = 4 mins
+
+# Workarounds for various client bugs:
+#   delay-newmail:
+#     Send EXISTS/RECENT new mail notifications only when replying to NOOP
+#     and CHECK commands. Some clients ignore them otherwise, for example OSX
+#     Mail (<v2.1). Outlook Express breaks more badly though, without this it
+#     may show user "Message no longer in server" errors. Note that OE6 still
+#     breaks even with this workaround if synchronization is set to
+#     "Headers Only".
+#   tb-extra-mailbox-sep:
+#     Thunderbird gets somehow confused with LAYOUT=fs (mbox and dbox) and
+#     adds extra '/' suffixes to mailbox names. This option causes Dovecot to
+#     ignore the extra '/' instead of treating it as invalid mailbox name.
+#   tb-lsub-flags:
+#     Show \Noselect flags for LSUB replies with LAYOUT=fs (e.g. mbox).
+#     This makes Thunderbird realize they aren't selectable and show them
+#     greyed out, instead of only later giving "not selectable" popup error.
+#
+# The list is space-separated.
+imap_client_workarounds = delay-newmail tb-extra-mailbox-sep
+
+protocol imap {
+  # Space separated list of plugins to load (default is global mail_plugins).
+  #mail_plugins = $mail_plugins
+
+  # Maximum number of IMAP connections allowed for a user from each IP address.
+  # NOTE: The username is compared case-sensitively.
+  #mail_max_userip_connections = 10
+}
+
+
+##
+## 90-plugin.conf
+## Plugin settings
+##
+
+# NOTE:
+# All wanted plugins must be listed in mail_plugins setting before any
+# of the settings take effect.
+
+plugin {
+  #setting_name = value
+
+  #
+  # Sieve: from package 'dovecot-pigeonhole'
+  # See: https://wiki.dovecot.org/Pigeonhole/Sieve/Configuration
+  #
+
+  # The location of the user's main script storage.  The active script
+  # in this storage is used as the main user script executed during
+  # delivery.  The "include" extension fetches the ":personal" scripts
+  # from this location.  When "ManageSieve" is used, this is also where
+  # scripts are uploaded.
+  # Here we use the file system as storage, with all the user's scripts
+  # located in the directory "~/sieve" and the active script (symbolic
+  # link) located at "~/.dovecot.sieve".
+  sieve = file:~/sieve;active=~/.dovecot.sieve
+
+  # Multiple global scripts that will been executed sequentially
+  # before/after the user's private script.
+  #
+  # If the "file" location path points to a directory, all the Sieve
+  # scripts contained therein (with the proper ".sieve" extension) are
+  # executed.
+  #
+  # Gobal scripts executed before the user's personal script.
+  sieve_before = /usr/local/etc/dovecot/sieve/before.d
+  #
+  # User-specific scripts executed before the user's personal script.
+  # (e.g., a vacation script managed through a non-ManageSieve tool.)
+  sieve_before2 = ~/sieve-before.d
+  #
+  # User-specific scripts executed after the user's personal script.
+  # NOTE: only when "keep" is still in effect.
+  sieve_after = ~/sieve-after.d
+  #
+  # Gobal scripts executed after the user's personal script.
+  # NOTE: only when "keep" is still in effect.
+  sieve_after2 = /usr/local/etc/dovecot/sieve/after.d
+}

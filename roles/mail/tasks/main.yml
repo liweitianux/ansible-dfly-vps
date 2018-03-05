@@ -74,6 +74,42 @@
 - name: opendkim - enable and start
   command: rcenable milter-opendkim
 
+
+#
+# Dovecot
+#
+
+- name: dovecot - copy sieve filters
+  copy:
+    src: sieve/  # trailing '/' -> directory contents
+    dest: /usr/local/etc/dovecot/sieve/
+  tags: dovecot
+
+- name: dovecot - compile sieve filters
+  command: >
+    find /usr/local/etc/dovecot/sieve/
+    -name '*.sieve'
+    -exec sievec '{}' ';'
+  tags: dovecot
+
+- name: dovecot - copy passwd
+  copy:
+    src: "{{ playbook_dir }}/private/dovecot/passwd"
+    dest: /usr/local/etc/dovecot/passwd
+    group: dovecot
+    mode: 0440
+  tags: dovecot
+
+- name: opendkim - generate config file
+  template:
+    src: dovecot.conf.j2
+    dest: /usr/local/etc/dovecot/dovecot.conf
+  notify: reload-dovecot
+  tags: dovecot
+
+- name: dovecot - enable and start
+  command: rcenable dovecot
+
 - name: aliases - forward root mails
   lineinfile:
     path: /etc/mail/aliases

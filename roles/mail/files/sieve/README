@@ -1,0 +1,24 @@
+This directory contains the global Sieve scripts:
+
+* before.d : scripts executed before the user's personal script;
+* after.d : scripts executed after the user's personal script.
+
+Most scripts are placed to the "after.d" location, thus enable user to
+easily overwrite the system/global defaults.
+
+NOTE:
+* These Sieve scripts should have the proper ".sieve" extension.
+* These Sieve scripts should been manually compiled, due to the lack of
+  write permission for the caller process:
+  $ sievec before.d
+  $ sievec after.d
+
+See:
+* https://wiki.dovecot.org/Pigeonhole/Sieve
+* https://wiki.dovecot.org/Pigeonhole/Sieve/Configuration
+* https://wiki.dovecot.org/Pigeonhole/Sieve/Usage
+* https://wiki.dovecot.org/Pigeonhole/Sieve/Examples
+
+
+Aaron LI
+2017-04-25

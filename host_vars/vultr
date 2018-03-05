@@ -56,7 +56,7 @@ nameservers:
 
 mail:
   domains:
-    - liwt.net
+    - liwt.net  # primary
     - aaronly.me
   # Virtual mail user for local delivery (e.g., by Dovecot))
   user:
