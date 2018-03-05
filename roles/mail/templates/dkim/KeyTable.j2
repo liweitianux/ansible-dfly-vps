@@ -1,0 +1,10 @@
+# OpenDKIM KeyTable
+# Map key names to signing keys
+# See opendkim.conf(5)
+# See also: http://opendkim.org/opendkim-README
+
+# <key-name>  <domain>:<selector>:<private-key-path>
+{% for domain in mail.domains %}
+{% set keyfile = "/usr/local/etc/mail/dkim/" + domain + "-" + mail.dkim.selector + ".pem" %}
+{{ domain }}.key  {{ domain }}:{{ mail.dkim.selector }}:{{ keyfile }}
+{% endfor %}

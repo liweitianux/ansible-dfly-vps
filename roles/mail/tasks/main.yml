@@ -8,14 +8,31 @@
     - dovecot
     - opendkim
 
-- name: dkim - create directory
+- name: opendkim - create directory
   file:
     path: /usr/local/etc/mail/dkim
     state: directory
+  tags: opendkim
 
-- name: dkim - generate domain keys
+- name: opendkim - generate domain keys
   include_tasks: dkim-genkey.yml domain={{ item }}
   with_items: "{{ mail.domains }}"
+  tags: opendkim
+
+- name: opendkim - generate tables
+  template:
+    src: "{{ item }}"
+    dest: /usr/local/etc/mail/dkim/{{ item | basename | regex_replace('\\.zone\\.j2', '') }}
+  with_items:
+    - dkim/KeyTable.j2
+    - dkim/SigningTable.j2
+  tags: opendkim
+
+- name: opendkim - generate config file
+  template:
+    src: opendkim.conf.j2
+    dest: /usr/local/etc/mail/opendkim.conf
+  tags: opendkim
 
 - name: postfix - set as mailer/MTA
   file:

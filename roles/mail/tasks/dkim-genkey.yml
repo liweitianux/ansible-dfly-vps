@@ -1,15 +1,16 @@
 ---
-- set_fact:
+- name: var - set domain_keyfile
+  set_fact:
     domain_keyfile: "{{ playbook_dir }}/private/dkim/{{ domain }}-{{ mail.dkim.selector }}.pem"
 
-- name: (local) dkim - check domain private key existence
+- name: (local) opendkim - check domain private key existence
   become: false
   stat:
     path: "{{ domain_keyfile }}"
   delegate_to: localhost
   register: stat_result
 
-- name: (local) dkim - generate domain private key
+- name: (local) opendkim - generate domain private key
   become: false
   command: >
     openssl genrsa 
@@ -17,9 +18,18 @@
   delegate_to: localhost
   when: not stat_result.stat.exists
 
-- name: dkim - copy domain private key
+- name: opendkim - copy domain private key
   copy:
     src: "{{ domain_keyfile }}"
     dest: /usr/local/etc/mail/dkim/{{ domain_keyfile | basename }}
-    group: mailnull
-    mode: 0440
+    owner: mailnull
+    mode: 0400
+
+- name: opendkim - test domain key
+  command: >
+    opendkim-testkey -vv -d {{ domain }}
+    -s {{ mail.dkim.selector }}
+    -k /usr/local/etc/mail/dkim/{{ domain_keyfile | basename }}
+  register: cmd
+  # ignore the error that the DNS record not found
+  failed_when: cmd.rc not in [0, 69]

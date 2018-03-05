@@ -1,0 +1,10 @@
+# OpenDKIM SigningTable
+# Table to select one or more signatures to apply to a message based on
+# the address found in the "From:" header field.
+# See opendkim.conf(5)
+# See also: http://opendkim.org/opendkim-README
+
+# <from-address>  <key-name>
+{% for domain in mail.domains %}
+*@{{ domain }}  {{ domain }}.key
+{% endfor %}

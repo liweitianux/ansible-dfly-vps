@@ -1,0 +1,146 @@
+#
+# /usr/local/etc/mail/opendkim.conf
+# Configuration file for OpenDKIM filter, see opendkim.conf(5).
+#
+# References
+# ----------
+# * OpenDKIM - README
+#   http://opendkim.org/opendkim-README
+# * Debian WiKi - OpenDKIM
+#   https://wiki.debian.org/opendkim
+# * ArchWiki - OpenDKIM
+#   https://wiki.archlinux.org/index.php/OpenDKIM
+#
+#
+# Aaron LI
+# 2017-04-19
+#
+
+#
+# Generate a key:
+#   $ mkdir /usr/local/etc/mail/dkim && cd /usr/local/mail/dkim
+#   $ opendkim-genkey -a -r -b 2048 -d <domain.com> -s <selector>
+#   $ chown mailnull *.private
+#   $ chmod 0400 *.private
+#
+# Set correct permission for the OpenDKIM socket and Postfix:
+#   $ mkdir -m 0640 -p /var/spool/postfix/opendkim
+#   $ chown mailnull:mailnull /var/spool/postfix/opendkim
+#   $ pw groupmod mailnull -m postfix  # Add "postfix" to "mailnull" group
+#
+# Test:
+#   $ opendkim-testkey -d <domain.com> -s <selector> -vvv
+#
+# Try also to send a mail to <check-auth@verifier.port25.com>
+#
+
+# Mode [sv]
+#
+# Indicates which mode(s) of operation should be provided.  "s" means
+# "sign", "v" means "verify".
+#
+Mode			sv
+
+# KeyTable dataset
+#
+# Defines a table that will be queried to convert key names to sets of
+# data of the form (signing domain, signing selector, private key).
+# The private key can either contain a PEM-formatted private key, a
+# base64-encoded DER format private key, or a path to a file containing
+# one of those.
+#
+KeyTable		/usr/local/etc/mail/dkim/KeyTable
+
+# SigningTable dataset
+#
+# Defines a dataset that will be queried for the message sender's address
+# to determine which private key(s) (if any) should be used to sign the
+# message.  The sender is determined from the value of the sender header
+# fields as described with SenderHeaders above.  The key for this lookup
+# should be an address or address pattern that matches senders; see the
+# opendkim.conf(5) man page for more information.  The value of the
+# lookup should return the name of a key found in the KeyTable that
+# should be used to sign the message.  If MultipleSignatures is set,
+# all possible lookup keys will be attempted which may result in multiple
+# signatures being applied.
+#
+SigningTable		refile:/usr/local/etc/mail/dkim/SigningTable
+
+# Socket socketspec
+#
+# Names the socket where this filter should listen for milter connections
+# from the MTA.  Required.  Should be in one of these forms:
+#
+# inet:port@address		to listen on a specific interface
+# inet:port			to listen on all interfaces
+# local:/path/to/socket		to listen on a UNIX domain socket
+#
+# NOTE: If a local UNIX socket is used, then correct permission must be
+#       configured for Postfix, i.e., allow "postfix" to read & write.
+#       (See the description at the head, as well as "UMask" option)
+#
+Socket			inet:{{ mail.dkim.port }}@localhost
+
+# UMask mask
+#
+# Change the process umask for file creation to the specified value.
+# The system has its own default which will be used (usually 022).
+# See the umask(2) man page for more information.
+#
+# NOTE: Enable group writable permission for Postfix.
+#
+#UMask			007
+
+# Userid userid
+#
+# Change to user "userid" before starting normal operation?  May include
+# a group ID as well, separated from the userid by a colon.
+#
+UserID			mailnull:mailnull
+
+# Canonicalization hdrcanon[/bodycanon]
+#
+# Select canonicalizations to use when signing.  If the "bodycanon" is
+# omitted, "simple" is used.  Valid values for each are "simple" and
+# "relaxed".
+#
+# Allow some reformatting of the header but not in the message body:
+Canonicalization	relaxed/simple
+
+# SoftwareHeader { yes | no }
+#
+# Add a DKIM-Filter header field to messages passing through this filter
+# to identify messages it has processed.
+#
+SoftwareHeader		yes
+
+# LogWhy { yes | no }
+#
+# If logging is enabled (see Syslog below), issues very detailed logging
+# about the logic behind the filter's decision to either sign a message
+# or verify it.  The logic behind the decision is non-trivial and can be
+# confusing to administrators not familiar with its operation.  A
+# description of how the decision is made can be found in the OPERATIONS
+# section of the opendkim(8) man page.  This causes a large increase
+# in the amount of log data generated for each message, so it should be
+# limited to debugging use and not enabled for general operation.
+#
+LogWhy			yes
+
+# Syslog { yes | no }
+#
+# Log informational and error activity to syslog?
+#
+Syslog			yes
+
+# SyslogSuccess { yes | no }
+#
+# Log success activity to syslog?
+#
+SyslogSuccess		yes
+
+# MilterDebug n
+#
+# Request a debug level of "n" from the milter library.  The default is 0.
+#
+# MilterDebug		0
