@@ -74,6 +74,13 @@
 - name: opendkim - enable and start
   command: rcenable milter-opendkim
 
+- name: aliases - forward root mails
+  lineinfile:
+    path: /etc/mail/aliases
+    line: "root: root@{{ mail.domains[0] }}"
+    insertafter: '#?\s*root:'
+  notify: update-aliases
+
 - name: postfix - set as mailer/MTA
   file:
     path: /etc/mail/mailer.conf

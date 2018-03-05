@@ -1,3 +1,6 @@
 ---
 - name: reload-opendkim
   command: rcreload milter-opendkim
+
+- name: update-aliases
+  command: postalias /etc/mail/aliases
