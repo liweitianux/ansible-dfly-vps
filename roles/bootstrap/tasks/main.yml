@@ -8,6 +8,8 @@
 - name: group - check deployment group
   command: pw groupshow "{{ deploy_user }}"
   register: pw_cmd
+  ignore_errors: true
+  changed_when: false
 
 - name: group - create deployment group
   command: pw groupadd "{{ deploy_user }}" -g 999
@@ -16,6 +18,8 @@
 - name: user - check deployment user
   command: pw usershow "{{ deploy_user }}"
   register: pw_cmd
+  ignore_errors: true
+  changed_when: false
 
 - name: user - create deployment user
   command: >
