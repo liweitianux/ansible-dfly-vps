@@ -29,3 +29,4 @@
     src: "{{ zonefile }}"
     dest: "/usr/local/etc/nsd/zones/{{ domain }}.zone"
     validate: "nsd-checkzone {{ domain }} %s"
+  notify: reload-nsd
