@@ -4,9 +4,10 @@
     name: "{{ item }}"
     state: present
   with_items:
+    - opendkim
     - postfix
     - dovecot
-    - opendkim
+    - dovecot-pigeonhole
 
 - name: opendkim - create directory
   file:

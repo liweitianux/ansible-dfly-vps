@@ -13,7 +13,7 @@
 - name: (local) opendkim - generate domain private key
   become: false
   command: >
-    openssl genrsa 
+    openssl genrsa
     -out "{{ domain_keyfile }}" "{{ mail.dkim.bits }}"
   delegate_to: localhost
   when: not stat_result.stat.exists
