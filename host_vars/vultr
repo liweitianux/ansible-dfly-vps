@@ -75,7 +75,7 @@ mail:
     # reporting URI of aggregate reports
     # Free DMARC weekly digests by https://dmarc.postmarkapp.com/
     rua:
-      liwt.net: ???
+      liwt.net: re+yis1v8izxn0@dmarc.postmarkapp.com
       aaronly.me: re+f6lpmirefcg@dmarc.postmarkapp.com
   # To avoid trashing by GMail
   google-site-verification:
