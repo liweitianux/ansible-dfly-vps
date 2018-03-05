@@ -110,6 +110,13 @@
 - name: dovecot - enable and start
   command: rcenable dovecot
 
+
+#
+# Postfix
+#
+# NOTE: Postfix depends on Dovecot (e.g., SASL), so setup Dovecot first.
+#
+
 - name: aliases - forward root mails
   lineinfile:
     path: /etc/mail/aliases
@@ -124,6 +131,17 @@
     state: link
     force: true
 
+- name: postfix - disable sendmail periodic tasks
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: "# {mark} ANSIBLE MANAGED - postfix"
+    block: |
+      # Disable sendmail(8) tasks in favor of Postfix
+      daily_clean_hoststat_enable="NO"
+      daily_status_mail_rejects_enable="NO"
+      daily_status_include_submit_mailq="NO"
+      daily_submit_queuerun="NO"
+
 - name: postfix - enable postfix and disable sendmail
   blockinfile:
     path: /etc/rc.conf
@@ -136,13 +154,31 @@
       sendmail_outbound_enable="NO"
       sendmail_msp_queue_enable="NO"
 
-- name: postfix - disable sendmail periodic tasks
-  blockinfile:
-    path: /etc/periodic.conf
-    marker: "# {mark} ANSIBLE MANAGED - postfix"
-    block: |
-      # Disable sendmail(8) tasks in favor of Postfix
-      daily_clean_hoststat_enable="NO"
-      daily_status_mail_rejects_enable="NO"
-      daily_status_include_submit_mailq="NO"
-      daily_submit_queuerun="NO"
+- name: postfix - copy config files
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/etc/postfix/{{ item | basename }}
+  with_fileglob:
+    - "postfix/*"
+  notify: reload-postfix
+  tags: postfix
+
+- name: postfix - generate config files
+  template:
+    src: "{{ item }}"
+    dest: /usr/local/etc/postfix/{{ item | basename | regex_replace('\.j2', '') }}
+  with_fileglob:
+    - "../templates/postfix/*.j2"
+  notify: reload-postfix
+  tags: postfix
+
+- name: postfix - update lookup tables
+  command: postmap /usr/local/etc/postfix/{{ item }}
+  with_items:
+    - virtual
+    - virtual-users
+  notify: reload-postfix
+  tags: postfix
+
+- name: postfix - start service
+  command: rcstart postfix

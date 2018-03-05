@@ -1,0 +1,35 @@
+#
+# Header checks policy for mails going through the submission service
+#
+# See header_checks(5)
+#
+# Usage:
+# 1. In "master.cf" set option "cleanup_service_name=subcleanup" for
+#    "submission" service;
+# 2. set option "header_checks" for "subcleanup" service.
+#
+# Credits:
+# * Anonymize headers in Postfix
+#   https://www.void.gr/kargig/blog/2013/11/24/anonymize-headers-in-postfix/
+# * Remove sensitive information from email headers with Postfix
+#   https://major.io/2013/04/14/remove-sensitive-information-from-email-headers-with-postfix/
+#
+#
+# Aaron LI
+# 2017-04-21
+#
+
+#
+# Strip sensitive information for outgoing mails
+#
+# NOTE:
+# * Pattern maching is case insensitive.
+# * First matched line will be modified.
+#
+#/^\s*Received:.*\(Authenticated sender:/  IGNORE
+/^\s*(Received: from)[^\n]*(.*)/  REPLACE  $1 [127.0.0.1] (localhost [127.0.0.1])$2
+/^\s*User-Agent/        IGNORE
+/^\s*X-Enigmail/        IGNORE
+/^\s*X-Forward/         IGNORE
+/^\s*X-Mailer/          IGNORE
+/^\s*X-Originating-IP/  IGNORE

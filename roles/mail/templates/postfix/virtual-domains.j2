@@ -1,0 +1,14 @@
+#
+# /usr/local/etc/postfix/virtual-domains
+# Postfix: $virtual_mailbox_domains
+#
+# The list of domains for which Postfix is the final destination,
+# i.e., the (virtual) domains hosted.
+#
+# Aaron LI
+# 2018-03-05
+#
+
+{% for domain in mail.domains %}
+{{ domain }}
+{% endfor %}

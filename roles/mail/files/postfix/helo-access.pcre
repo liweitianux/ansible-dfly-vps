@@ -1,0 +1,26 @@
+#
+# Postfix access control on HELO/EHLO context.
+#
+# References:
+# * Postfix SMTP relay and access control
+#   http://www.postfix.org/SMTPD_ACCESS_README.html
+#
+# NOTE: by default, patterns are case insensitive.
+#
+# Aaron LI
+# 2017-08-05
+#
+
+#
+# smtpd_helo_restrictions =
+# 	permit_mynetworks,
+# 	check_helo_access pcre:/usr/local/etc/postfix/helo-access.pcre,
+# 	reject_non_fqdn_helo_hostname,
+# 	reject_invalid_helo_hostname,
+# 	reject_unknown_helo_hostname,
+# 	permit
+#
+
+# Whitelist M$ Exchange Online Protection
+# See also: https://technet.microsoft.com/en-us/library/dn163583
+/^.*\.outbound.protection.outlook.com$/         OK

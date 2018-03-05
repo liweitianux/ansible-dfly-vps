@@ -1,0 +1,93 @@
+#
+# /usr/local/etc/postfix/master.cf
+#
+# Postfix master process configuration file.
+# See master(5), and http://www.postfix.org/master.5.html
+#
+#
+# Aaron LI
+# 2017-04-16
+#
+
+#
+# NOTE: Run "postfix reload" after editing this file!
+#
+
+# ==========================================================================
+# service type  private unpriv  chroot  wakeup  maxproc command + args
+#               (yes)   (yes)   (no)    (never) (100)
+# ==========================================================================
+
+# Disable authenticiation via SMTP server port 25, force clients (MUA) to
+# use the secure submission service on port 587, therefore to make sure
+# that client # connections are always made using secure ciphers.
+#
+#smtp      inet  n       -       n       -       -       smtpd
+#  -o smtpd_sasl_auth_enable=no
+#
+# Postscreen service and friends
+smtp      inet  n       -       n       -       1       postscreen
+  -o smtpd_sasl_auth_enable=no
+smtpd     pass  -       -       n       -       -       smtpd
+dnsblog   unix  -       -       n       -       0       dnsblog
+tlsproxy  unix  -       -       n       -       0       tlsproxy
+
+# Secure submission service: require user authentication
+# https://wiki2.dovecot.org/HowTo/PostfixAndDovecotSASL
+submission inet n       -       n       -       -       smtpd
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_security_level=encrypt
+  -o tls_preempt_cipherlist=yes
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_reject_unlisted_recipient=no
+  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+  -o smtpd_helo_restrictions=permit_sasl_authenticated,reject
+  -o smtpd_sender_restrictions=reject_sender_login_mismatch
+  -o smtpd_recipient_restrictions=reject_non_fqdn_recipient,reject_unknown_recipient_domain,permit_sasl_authenticated,reject
+  -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
+  -o milter_macro_daemon_name=ORIGINATING
+  -o cleanup_service_name=subcleanup
+
+#628      inet  n       -       n       -       -       qmqpd
+pickup    unix  n       -       n       60      1       pickup
+cleanup   unix  n       -       n       -       0       cleanup
+subcleanup   unix  n       -       n       -       0       cleanup
+  -o header_checks=pcre:$config_directory/header-checks-submission.pcre
+qmgr      unix  n       -       n       300     1       qmgr
+#qmgr     unix  n       -       n       300     1       oqmgr
+tlsmgr    unix  -       -       n       1000?   1       tlsmgr
+rewrite   unix  -       -       n       -       -       trivial-rewrite
+bounce    unix  -       -       n       -       0       bounce
+defer     unix  -       -       n       -       0       bounce
+trace     unix  -       -       n       -       0       bounce
+verify    unix  -       -       n       -       1       verify
+flush     unix  n       -       n       1000?   0       flush
+proxymap  unix  -       -       n       -       -       proxymap
+proxywrite unix -       -       n       -       1       proxymap
+smtp      unix  -       -       n       -       -       smtp
+relay     unix  -       -       n       -       -       smtp
+#  -o smtp_helo_timeout=5 -o smtp_connect_timeout=5
+showq     unix  n       -       n       -       -       showq
+error     unix  -       -       n       -       -       error
+retry     unix  -       -       n       -       -       error
+discard   unix  -       -       n       -       -       discard
+local     unix  -       n       n       -       -       local
+virtual   unix  -       n       n       -       -       virtual
+lmtp      unix  -       -       n       -       -       lmtp
+anvil     unix  -       -       n       -       1       anvil
+scache    unix  -       -       n       -       1       scache
+
+# ====================================================================
+# Interfaces to non-Postfix software.  Be sure to examine the manual
+# pages of the non-Postfix software to find out what options it wants.
+#
+# Many of the following services use the Postfix pipe(8) delivery
+# agent.  See the pipe(8) man page for information about ${recipient}
+# and other message envelope options.
+# ====================================================================
+
+# Dovecot LDA as the `virtual_transport` for Postfix
+# https://wiki.dovecot.org/LDA/Postfix
+dovecot   unix  -       n       n       -       -       pipe
+  flags=DRhu user=vmail:vmail argv=/usr/local/libexec/dovecot/deliver
+  -f ${sender} -d ${recipient}

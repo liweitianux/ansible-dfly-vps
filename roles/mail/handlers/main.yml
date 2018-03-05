@@ -2,6 +2,9 @@
 - name: reload-opendkim
   command: rcreload milter-opendkim
 
+- name: reload-postfix
+  command: rcreload postfix
+
 - name: reload-dovecot
   command: rcreload dovecot
 

@@ -1,0 +1,846 @@
+#
+# /usr/local/etc/postfix/main.cf
+# Postfix main configuration file, see postconf(5) for details.
+#
+# For best results, change no more than 2-3 parameters at a time,
+# and test if Postfix still works after every change.
+#
+# References
+# ----------
+# * Postfix Configuration Parameters
+#   http://www.postfix.org/postconf.5.html
+# * Postfix SASL Howto
+#   http://www.postfix.org/SASL_README.html
+# * Postfix Virtual Domain Hosting Howto
+#   http://www.postfix.org/VIRTUAL_README.html
+#
+#
+# Aaron LI
+# 2017-04-15
+#
+
+{% set mydomain = mail.domains[0] %}
+
+# COMPATIBILITY
+#
+# The compatibility_level determines what default settings Postfix
+# will use for main.cf and master.cf settings. These defaults will
+# change over time.
+#
+# To avoid breaking things, Postfix will use backwards-compatible
+# default settings and log where it uses those old backwards-compatible
+# default settings, until the system administrator has determined
+# if any backwards-compatible default settings need to be made
+# permanent in "main.cf" or "master.cf".
+#
+# When this review is complete, update the compatibility_level setting
+# below as recommended in the RELEASE_NOTES file.
+#
+compatibility_level = 2
+
+# SOFT BOUNCE
+#
+# The soft_bounce parameter provides a limited safety net for
+# testing.  When soft_bounce is enabled, mail will remain queued that
+# would otherwise bounce. This parameter disables locally-generated
+# bounces, and prevents the SMTP server from rejecting mail permanently
+# (by changing 5xx replies into 4xx replies). However, soft_bounce
+# is no cure for address rewriting mistakes or mail routing mistakes.
+#
+#soft_bounce = no
+
+# INTERNET HOST AND DOMAIN NAMES
+# 
+# The myhostname parameter specifies the internet hostname of this
+# mail system.  The default is to use the fully-qualified domain name
+# from gethostname().  $myhostname is used as a default value for many
+# other configuration parameters.
+#
+myhostname = mail.{{ mydomain }}
+
+# The mydomain parameter specifies the local internet domain name.
+# The default is to use $myhostname minus the first component.
+# $mydomain is used as a default value for many other configuration
+# parameters.
+#
+mydomain = {{ mydomain }}
+
+# SENDING MAIL
+# 
+# The myorigin parameter specifies the domain that locally-posted
+# mail appears to come from. The default is to append $myhostname,
+# which is fine for small sites.  If you run a domain with multiple
+# machines, you should (1) change this to $mydomain and (2) set up
+# a domain-wide alias database that aliases each user to
+# user@that.users.mailhost.
+#
+# For the sake of consistency between sender and recipient addresses,
+# myorigin also specifies the default domain name that is appended
+# to recipient addresses that have no @domain part.
+#
+myorigin = $mydomain
+
+# SHOW SOFTWARE VERSION OR NOT
+#
+# The smtpd_banner parameter specifies the text that follows the 220
+# code in the SMTP server's greeting banner.
+#
+# You MUST specify $myhostname at the start of the text.  That is an
+# RFC requirement.  Postfix itself does not care.
+#
+# NOTE: Give out as little information as possible :-)
+#
+smtpd_banner = $myhostname ESMTP
+
+
+##
+## RECEIVING MAIL
+##
+
+# The inet_interfaces parameter specifies the network interface
+# addresses that this mail system receives mail on.  By default,
+# the software claims all active interfaces on the machine. The
+# parameter also controls delivery of mail to user@[ip.address].
+#
+# See also the proxy_interfaces parameter, for network addresses that
+# are forwarded to us via a proxy or network address translator.
+#
+# Note: you need to stop/start Postfix when this parameter changes.
+#
+inet_interfaces = all
+
+# The Internet protocols Postfix will attempt to use when making or
+# accepting connections.  'all' for both IPv4 and IPv6.
+#
+inet_protocols = all
+
+# The mydestination parameter specifies the list of domains that this
+# machine considers itself the final destination for.
+#
+# These domains are routed to the delivery agent specified with the
+# local_transport parameter setting.  By default, that is the UNIX
+# compatible delivery agent that lookups all recipients in /etc/passwd
+# and /etc/aliases or their equivalent.
+#
+# The default is $myhostname + localhost.$mydomain + localhost.
+# On a mail domain gateway, you should also include $mydomain.
+#
+# Do not specify the names of virtual domains - those domains are
+# specified elsewhere (see VIRTUAL_README).
+#
+# Do not specify the names of domains that this machine is backup MX
+# host for.  Specify those names via the relay_domains settings for
+# the SMTP server, or use permit_mx_backup if you are lazy (see
+# STANDARD_CONFIGURATION_README).
+#
+# The local machine is always the final destination for mail addressed
+# to user@[the.net.work.address] of an interface that the mail system
+# receives mail on (see the inet_interfaces parameter).
+#
+# Specify a list of host or domain names, /file/name or type:table
+# patterns, separated by commas and/or whitespace.  A /file/name
+# pattern is replaced by its contents; a type:table is matched when
+# a name matches a lookup key (the right-hand side is ignored).
+# Continue long lines by starting the next line with whitespace.
+#
+# NOTE: If the machine is a mail server for its entire domain, then
+#       "$mydomain" must be listed as well.
+# NOTE: In order to avoid mail delivery loops, you must list all
+#       hostnames of the machine, including $myhostname, and
+#       localhost.$mydomain
+#
+# WARNING: NEVER list "virtual_mailbox_domains" or "virtual_alias_domains"
+#          names as "mydestination" domains here!
+#          See also the below $virtual_mailbox_domains .
+#
+# NOTE: Since we will use the virtual(8) mailbox delivery agent (i.e.,
+#       invoke "dovecot") for $mydomain, we should list $mydomain under
+#       $virtual_mailbox_domains instead here!
+#
+mydestination = $myhostname, localhost.$mydomain, localhost
+
+
+##
+## TRUST AND RELAY CONTROL
+##
+
+# The mynetworks parameter specifies the list of "trusted" SMTP
+# clients that have more privileges than "strangers".
+#
+# In particular, "trusted" SMTP clients are allowed to relay mail
+# through Postfix.  See the 'smtpd_recipient_restrictions' parameter.
+#
+# You can specify the list of "trusted" network addresses by hand
+# or you can let Postfix do it for you (which is the default).
+#
+# By default (mynetworks_style = subnet), Postfix "trusts" SMTP
+# clients in the same IP subnetworks as the local machine.
+# 
+# Specify "mynetworks_style = class" when Postfix should "trust" SMTP
+# clients in the same IP class A/B/C networks as the local machine.
+# Don't do this with a dialup site - it would cause Postfix to "trust"
+# your entire provider's network.  Instead, specify an explicit
+# mynetworks list by hand, as described below.
+#  
+# Specify "mynetworks_style = host" when Postfix should "trust"
+# only the local machine.
+# 
+mynetworks_style = host
+
+# The relay_domains parameter restricts what destinations this system will
+# relay mail to.  See the smtpd_recipient_restrictions description in
+# postconf(5) for detailed information.
+#
+# By default, Postfix relays mail
+# - from "trusted" clients (IP address matches $mynetworks) to any destination,
+# - from "untrusted" clients to destinations that match $relay_domains or
+#   subdomains thereof, except addresses with sender-specified routing.
+# The default relay_domains value is $mydestination.
+# 
+# In addition to the above, the Postfix SMTP server by default accepts mail
+# that Postfix is final destination for:
+# - destinations that match $inet_interfaces or $proxy_interfaces,
+# - destinations that match $mydestination
+# - destinations that match $virtual_alias_domains,
+# - destinations that match $virtual_mailbox_domains.
+# These destinations do not need to be listed in $relay_domains.
+# 
+# Specify a list of hosts or domains, /file/name patterns or type:name
+# lookup tables, separated by commas and/or whitespace.  Continue
+# long lines by starting the next line with whitespace. A file name
+# is replaced by its contents; a type:name table is matched when a
+# (parent) domain appears as lookup key.
+#
+# NOTE: Postfix will not automatically forward mail for domains that
+# list this system as their primary or backup MX host. See the
+# permit_mx_backup restriction description in postconf(5).
+#
+#relay_domains = $mydestination
+
+
+##
+## Mail delivery for system users
+##
+
+# ALIAS DATABASE
+#
+# The alias_maps parameter specifies the list of alias databases used
+# by the local delivery agent.  The default list is system dependent.
+#
+# If you change the alias database, run "postalias /etc/aliases"
+# (or wherever your system stores the mail alias file), or simply run
+# "newaliases" to build the necessary DBM or DB file.
+#
+alias_maps = hash:/etc/mail/aliases
+#
+# The alias_database parameter specifies the alias database(s) that
+# are built with "newaliases" or "sendmail -bi".  This is a separate
+# configuration parameter, because alias_maps (see above) may specify
+# tables that are not necessarily all under control by Postfix.
+#
+alias_database = $alias_maps
+
+# ADDRESS EXTENSIONS (e.g., user+foo)
+#
+# The recipient_delimiter parameter specifies the separator between
+# user names and address extensions (user+foo). See canonical(5),
+# local(8), relocated(5) and virtual(5) for the effects this has on
+# aliases, canonical, virtual, relocated and .forward file lookups.
+# Basically, the software tries user+foo and .forward+foo before
+# trying user and .forward.
+#
+recipient_delimiter = +
+
+# The mailbox_command parameter specifies the optional external
+# command to use instead of mailbox delivery.  The command is run as
+# the recipient with proper HOME, SHELL and LOGNAME environment settings.
+# Exception: delivery for root is done as $default_user.
+#
+# Other environment variables of interest: USER (recipient username),
+# EXTENSION (address extension), DOMAIN (domain part of address),
+# and LOCAL (the address localpart).
+#
+# Unlike other Postfix configuration parameters, the mailbox_command
+# parameter is not subjected to $parameter substitutions.  This is to
+# make it easier to specify shell syntax.
+#
+# Avoid shell meta characters because they will force Postfix to run
+# an expensive shell process.
+#
+# IF YOU USE THIS TO DELIVER MAIL SYSTEM-WIDE, YOU MUST SET UP AN
+# ALIAS THAT FORWARDS MAIL FOR ROOT TO A REAL USER.
+#
+# See also: https://wiki.dovecot.org/LDA/Postfix
+#
+mailbox_command =
+	/usr/local/libexec/dovecot/deliver
+	-f "$SENDER" -a "$RECIPIENT"
+
+
+##
+## SASL authentication and authorization with Dovecot
+##
+## See: https://wiki2.dovecot.org/HowTo/PostfixAndDovecotSASL
+##
+
+# Use the Dovecot SASL implementation
+smtpd_sasl_type = dovecot
+
+# Path to the Dovecot authentication server.
+# Here the path relative to the Postfix queue directory is used,
+# so that it will work whether or not the Postfix SMTP server
+# runs chrooted.
+smtpd_sasl_path = private/auth
+
+# Enable SASL authentication
+smtpd_sasl_auth_enable = yes
+
+# SMTP server policies on SASL mechanisms available to the clients.
+#
+# SASL mechanism properties:
+#   - noanonymous     : don't use mechanisms that permit anonymous
+#                       authentication (i.e., disable ANONYMOUS auth);
+#   - noplaintext     : don't use mechanisms that transmit unencrypted
+#                       username and password information
+#                       (i.e., disable PLAIN auth);
+#   - nodictionary    : don't use mechanisms that are vulnerable to
+#                       dictionary attacks;
+#   - forward_secrecy : require forward secrecy between sessions (breaking
+#                       one session does not break earlier sessions);
+#   - mutual_auth     : use only mechanisms that authenticate both the
+#                       client and the server to each other.
+#
+# NOTE: Always set at least the 'noanonymous' option!
+#       Otherwise, the Postfix SMTP server can give strangers the same
+#       authorization as a properly-authenticated client!
+#
+# Allows plaintext mechanisms (e.g., PLAIN, LOGIN), but only over a
+# TLS-encrypted connection:
+smtpd_sasl_security_options = noanonymous, noplaintext
+smtpd_sasl_tls_security_options = noanonymous
+
+# Offer SASL authentication only after a TLS-encrypted session has
+# been established.
+smtpd_tls_auth_only = yes
+
+# The name of the Postfix SMTP server's local SASL authentication realm,
+# which tells Postfix append a domain name (or any other string) to a
+# SASL login name that does not have a domain part (e.g., "username"
+# instead of "username@example.com").
+# This is useful as a default setting and safety net for misconfigured
+# clients.
+#smtpd_sasl_local_domain = $mydomain
+
+# Report the SASL authenticated user name in "Received:" message headers.
+# NOTE: The SASL login names will be shared with the entire world.
+smtpd_sasl_authenticated_header = yes
+
+
+##
+## Access control & address verification
+##
+
+# By default, Postfix has a moderately restrictive approach to mail
+# relaying.  See the "smtpd_relay_restrictions" parameter for a
+# description of the default mail relay policy.
+#
+# References:
+# * Postfix SMTP Relay and Access Control
+#   http://www.postfix.org/SMTPD_ACCESS_README.html
+# * Postfix Address Verficiation Howto
+#   http://www.postfix.org/ADDRESS_VERIFICATION_README.html
+# * CentOS Wiki - HowTos - Postfix Restrictions
+#   https://wiki.centos.org/HowTos/postfix_restrictions
+#
+
+# Example SMTP session explaining the various restrictions/checks:
+#+--------------------------------------------------------------------+
+#| $ telnet <server> 25
+#| <- 220 mail.example.com ESMTP Postfix        # smtpd_client_restrictions
+#| -> HELO mail.example.com                     # smtpd_helo_restrictions
+#| <- 250 mail.example.com
+#| -> MAIL FROM:<sender@example.com>            # smtpd_sender_restrictions
+#| <- 250 2.1.0 Ok
+#| -> RCPT TO:<recipient@example.com>           # smtpd_recipient_restrictions
+#| <- 250 2.1.5 Ok
+#| -> DATA                                      # smtpd_data_restrictions
+#| <- 354 End data with <CR><LF>.<CR><LF>
+#| -> To:<recipient@example.com>                # header_checks
+#| -> From:<sender@example.com>
+#| -> Subject:SMTP test
+#| -> This is a test meesage.                   # body_checks
+#| -> .
+#| <- 250 2.0.0 Ok: queued as xxxxxxxxxx
+#| -> QUIT
+#| <- 221 2.0.0 Bye
+#+--------------------------------------------------------------------+
+
+# NOTE:
+# The HELO name is not related to and doesn't matter for
+# 'reject_unknown_client_hostname'.  Note that there are two different
+# context of hostname: client (rDNS) vs. HELO (SMTP).
+# The *client* hostname is determined by an rDNS lookup of the connecting
+# IP.  The resulting rDNS hostname is then looked up, and must resolve
+# to the connecting IP.  This is also referred to as "Forward Confirmed
+# reverse DNS" (FCrDNS).
+
+# Wait until the "RCPT TO" or "ETRN" commands before evaluating the
+# corresponding restriction rules. (default: yes)
+#
+# This allows Postfix to log recipient address information when rejecting
+# a client name/address or sender address.
+#
+smtpd_delay_reject = yes
+
+# Require that the client sends the HELO/EHLO command before sending
+# the MAIL FROM or TERN command, i.e., senders must identify themselves
+# before we'll accept e-mail commands from them.  This is important
+# because we can use the way the remote server identities itself as a
+# basis for accepting or rejecting mail from it --- spammers often
+# don't issue proper HELO/EHLO response.
+#
+# NOTE: This may cause problems with home-grown clients, therefore,
+#       this requirement is disabled by default.
+#
+smtpd_helo_required = yes
+#
+# Restrictions that the Postfix SMTP server applies in the context of
+# a client HELO command.
+#
+# * reject_non_fqdn_helo_hostname : reject connections if the hostname
+#       supplied with the HELO command is not a fully qualified domain
+#       name as required by the RFC guidelines.
+# * reject_invalid_helo_hostname : reject connection attempts when the
+#       HELO hostname syntax is invalid.
+# * reject_unknown_helo_hostname : reject messages if the hostname
+#       supplied with the helo command doesn't have either a valid DNS
+#       A or MX record.
+#
+# NOTE: set 'smtpd_helo_required=yes' to fully enforce this restriction.
+#
+# WARNING:
+# Do note that the HELO/EHLO check that requires a valid hostname is
+# going to drop legitimate mail.  Yes, people running mail servers
+# should know better, but there are way to many Exchange servers out
+# there that will spit out a HELO line like "localhost.localdomain"
+# or "SERVER1.LOCAL" or other nonsense.  Therefore, maintaining a
+# whitelist (which is a pain) may be necessary.  In addition, the
+# rejections will show up in your logs, so it's possible to enable
+# the check and then see who you're blocking.
+#
+# WARNING:
+# The 'reject_unknown_helo_hostname' policy should be used with
+# *caution* as it # will reject email from legitimate systems with
+# temporary DNS problems and can lead to false positives.
+#
+smtpd_helo_restrictions =
+	permit_mynetworks,
+	check_helo_access pcre:$config_directory/helo-access.pcre,
+	reject_non_fqdn_helo_hostname,
+	reject_invalid_helo_hostname,
+	warn_if_reject reject_unknown_helo_hostname,
+	permit
+
+# Relay control
+# Only local clients and authenticated clients may specify any
+# destination domain.
+#
+# WARNING: The 'reject_unauth_destination' is critically important!
+#          The server would be an *open relay* without this!
+#
+smtpd_relay_restrictions =
+	permit_mynetworks,
+	permit_sasl_authenticated,
+	reject_unauth_destination
+
+# WARNING: Recipient address verficiation may cause an increased load
+#          on down-stream servers in the case of a dictionary attack
+#          or a flood of backscatter bounces.
+#
+smtpd_recipient_restrictions =
+	reject_unknown_reverse_client_hostname,
+	warn_if_reject reject_unknown_client_hostname,
+	reject_non_fqdn_recipient,
+	reject_unknown_sender_domain,
+	reject_unknown_recipient_domain,
+	permit_mynetworks,
+	permit_sasl_authenticated,
+	reject_invalid_hostname,
+	reject_non_fqdn_sender
+
+# Block clients that speak too early.
+# Reject the request when the client sends SMTP commands ahead of
+# time where it is not allowed, or when the client sends SMTP commands
+# ahead of time without knowing that Postfix actually supports ESMTP
+# command pipelining.
+#
+smtpd_data_restrictions = reject_unauth_pipelining
+
+# Envelope sender address control
+#
+# * reject_unknown_sender_domain:
+#       Don't accept mail from domains that don't exist.
+# * reject_sender_login_mismatch:
+#       Reject the sender address in the "MAIL FROM" command if
+#       $smtpd_sender_login_maps does not specify the SMTP client's login
+#       name (i.e., SASL authenticated) as an owner of that address. 
+#
+# WARNING: Sender address verficiation may cause your site to be
+#          blacklisted by some providers.
+#
+# NOTE:
+# By default an SMTP client may specify *any* envelope sender address
+# in the "MAIL FROM" command, because the server only knows the remote
+# client's hostname and IP address, but not the user who controls the
+# remote client.
+# But the Postfix SMTP server knowns who the sender is once the SASL
+# authentication is used.  Given a table of envelope sender addresses
+# and SASL login names ($smtpd_sender_login_maps), the server can
+# decide if the SASL authenticated client is allowed to use a particular
+# envelope sender address.
+#
+smtpd_sender_restrictions =
+	reject_unknown_sender_domain,
+	reject_sender_login_mismatch
+
+# A lookup table maps between the envelope sender addresses and SASL
+# login names (i.e., the owners).
+#
+smtpd_sender_login_maps = $virtual_mailbox_maps
+
+# Use permanet 550 errors for rejections, to stop retries.
+# Tell Postfix to reject messages that match the rejection criteria
+# with a 550 error, which should tell the remote server that its
+# message wasn't delivered and it shouldn't try to send it again
+# (as opposed to the default 450 error, which implies that the
+# remote server should retry sending).
+#
+#unknown_address_reject_code = 550
+#unknown_client_reject_code = 550
+#unknown_hostname_reject_code = 550
+
+
+##
+## SMTP server TLS settings
+##
+
+# Ask remote servers to identify themselves with a certificate.
+#
+smtpd_tls_ask_ccert = yes
+
+# TLS certificate and key for this server (host)
+#
+smtpd_tls_cert_file = /usr/local/etc/ssl/acme/$mydomain/fullchain.pem
+smtpd_tls_key_file = /usr/local/etc/ssl/acme/private/$mydomain.pem
+
+# A CA bundle used by Postfix to validate remote servers' certificate.
+# NOTE: install package 'ca_root_nss'.
+#
+smtpd_tls_CAfile = /usr/local/etc/ssl/cert.pem
+
+# File with Diffie-Hellman parameters that the Postfix SMTP server
+# should use with non-export EDH/DHE ciphers.
+#
+smtpd_tls_dh1024_param_file = /usr/local/etc/ssl/dhparam4096.pem
+
+# The minimum TLS cipher grade that the Postfix SMTP server will use
+# with opportunistic TLS encryption.
+# Do not use weak encryption ciphers.
+#
+smtpd_tls_ciphers = high
+
+# Enable EECDH key exchange for Forward Security
+#
+smtpd_tls_eecdh_grade = ultra
+
+# The SMTP TLS security level for the Postfix SMTP server.
+# Value "may" tells Postfix that it should use SSL/TLS if the remote
+# host supports it, i.e., opportunistic TLS.
+# There is a stricter option ("encrypt") to force Postfix to *always*
+# encrypt, but that makes your server non-compliant with IETF RFC 2487.
+#
+smtpd_tls_security_level = may
+
+# Enable additional Postfix SMTP server logging of TLS activity.
+#   1 : log only a summary message on TLS handshake completion;
+#       no logging of client certificate trust-chain verification
+#       errors if client certificate verfication is not required.
+# NOTE: do NOT use level 2 or higher except in case of problems.
+#
+smtpd_tls_loglevel = 1
+
+# The SSL/TLS protocols accepted by the Postfix SMTP server with
+# mandatory/opportunistic TLS encryption.
+#
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtpd_tls_protocols = !SSLv2, !SSLv3
+
+# The minimum TLS cipher grade that the Postfix SMTP server will
+# use with mandatory TLS encryption.
+#
+smtpd_tls_mandatory_ciphers = high
+
+# Request that the Postfix SMTp server produces "Received:" message
+# headers that include information about the protocol and cipher
+# used, as well as the remote SMTP client CommonName and client
+# certificate issuer CommonName.
+# NOTE: This is disabled by default, as the information may be modified
+#       in transit through other mail servers.  Only information that
+#       was recorded by the *final destination* can be trusted.
+#
+smtpd_tls_received_header = yes
+
+# Name of the file containing the optional Postfix SMTP server TLS
+# session cache.  Specify a database type that supports enumeration,
+# such as "btree" or "sdbm"; there is no need to support concurrent
+# access.  The file is created if it does not exist.
+#
+smtpd_tls_session_cache_database = btree:$data_directory/smtpd_scache
+#
+# The expiration time of Postfix SMTP server TLS session cache
+# information.  A cache cleanup is performed periodically every
+# such time.
+#
+smtpd_tls_session_cache_timeout = 3600s
+
+
+##
+## Virtual domain hosting with Dovecot delivery
+##
+
+# Postfix virtual MAILBOX: separate domains, non-UNIX accounts,
+# and non-Postfix mailbox store (use $virtual_transport).
+#
+# With the Postfix virtual(8) mailbox delivery agent, every recipient
+# address can have its own virtual mailbox. virtual mailbox domains
+# ($virtual_mailbox_domains) do not need the clumsy translation from
+# each recipient addresses into a different address, and owners of a
+# virtual mailbox address do not need to have a UNIX system account.
+#
+
+# Tell Postfix which domain(s) its virtual users live in.
+# The specified domain(s) is also the final destination; mail is
+# delivered via the $virtual_transport mail delivery transport.
+#
+# WARNING: NEVER list a "virtual_mailbox_domains" name as a
+#          "mydestination" domain above!
+#
+virtual_mailbox_domains = $config_directory/virtual-domains
+
+# Tell Postfix the virtual users for which its actually responsible
+# for mail delivery.
+#
+virtual_mailbox_maps = hash:$config_directory/virtual-mailbox-users
+
+# Link alias e-mail addresses to real e-mail addresses.
+#
+# WARNING: NEVER put a virtual MAILBOX wild-card in the virtual
+#          ALIAS file!!
+#
+virtual_alias_maps = hash:$config_directory/virtual
+
+# With delivery to a non-Postfix mailbox store for hosted domains,
+# the 'virtual_transport' parameter usually specifies the Postfix LMTP
+# client, or the name of a "master.cf" entry that executes non-Postfix
+# software via the 'pipe' delivery agent, which is responsible for the
+# next-hop destination for final delivery to domains listed with
+# $virtual_mailbox_domains .
+#
+# NOTE: Add the appropriate service definition in "master.cf" before
+#       restart Postfix.
+#
+virtual_transport = dovecot
+dovecot_destination_recipient_limit = 1
+
+
+##
+## Other settings
+##
+
+# Do not sends "new mail" notifications to users who have requested
+# new mail notification with the UNIX command "biff y".
+#
+biff = no
+
+# The maximal size of any 'local(8)' individual mailbox or maildir
+# file, or zero (no limit).
+mailbox_size_limit = 0
+#
+# The maximal size (byte) of a message, including envelope information.
+message_size_limit = 52428800
+
+# The default maximal number of parallel deliveries to the same
+# destination.  This is the default limit for delivery via the 'lmtp(8)',
+# 'pipe(8)', 'smtp(8)' and 'virtual(8)' delivery agents.
+#
+default_destination_concurrency_limit = 5
+
+# The maximal number of parallel deliveries to the same destination
+# via the relay message delivery transport.  This limit is enforced
+# by the queue manager.
+#
+relay_destination_concurrency_limit = 1
+
+# Disable the SMTP "VRFY" command, which is used to verify that an email
+# address exists prior to sending a message, therefore stops some
+# techniques used to harvest email addresses.
+#
+disable_vrfy_command = yes
+
+# Require strictly RFC821 compliant envelopes, which requires that
+# addresses received in "MAIL FROM" and "RCPT TO" commands are enclosed
+# with <> and do not contain other comments or phrases, e.g.,
+# <user@example.com>.
+# This stops mail from poorly written software (may reduce spams).
+#
+strict_rfc821_envelopes = yes
+
+# List or bit-mask of OpenSSL options to enable.
+#
+# * NO_COMPRESSION : disable SSL compression even if supported by
+#                    the OpenSSL library.  Compression is CPU-intensive,
+#                    and compression before encryption does not always
+#                    improve security.
+tls_ssl_options = NO_COMPRESSION
+
+# The OpenSSL cipherlist for "high" grade ciphers.
+#
+# WARNING: you are strongly encouraged to NOT change this settings.
+#
+tls_high_cipherlist = EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES12
+
+# Log the hostname of a remote SMTP server that offers STARTTLS, when
+# TLS is not already enabled for that server.
+#
+smtp_tls_note_starttls_offer = yes
+
+# The minimum TLS cipher grade that the Postfix SMTP client will use
+# with opportunistic TLS encryption.
+# Do not use weak encryption ciphers.
+#
+smtp_tls_ciphers = high
+
+# The default SMTP TLS security level for the Postfix SMTP client.
+#   - may : opportunistic TLS.  Use TLS if this is supported by the
+#           remote SMTP server, otherwise use plaintext.
+#   - encrypt : mandatory TLS!
+#
+smtp_tls_security_level = may
+
+# Enable additional Postfix SMTP client logging of TLS activity.
+#
+smtp_tls_loglevel = 1
+
+# The SSL/TLS protocols accepted by the Postfix SMTP client with
+# mandatory/opportunistic TLS encryption.
+#
+smtp_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtp_tls_protocols = !SSLv2, !SSLv3
+
+# Name of the file containing the optional Postfix SMTP client TLS
+# session cache.
+#
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+
+##
+## Mail filter (milter) settings
+##
+
+# The default action when a Milter (mail filter) application is
+# unavailable or mis-configured.
+#
+milter_default_action = accept
+
+# A list of Milter applications for new mail that arrives via the
+# Postfix SMTP server.
+#
+# * inet:localhost:{{ mail.dkim.port }} - OpenDKIM
+#
+smtpd_milters = inet:localhost:{{ mail.dkim.port }}
+
+# A list of Milter applications for new mail that does not arrive
+# via the Postfix SMTP server.
+#
+non_smtpd_milters = $smtpd_milters
+
+
+##
+## Postscreen and additional filtering
+##
+## NOTE: Enable the corresponding daemons/utilities in "master.cf".
+##
+
+postscreen_access_list = permit_mynetworks
+
+# Enforce non-spammy connection behavior (and not accept connections
+# from clients that try to short-circuit the process to deliver
+# spam faster).
+#
+postscreen_greet_action = enforce
+
+# Enable DNS blacklist checking.
+# DNSRBLs (DNS real-time black hole lists) are lists maintained
+# by various entities, some companies, and some individuals, filled
+# with IP addresses and ranges from which the list maintainer
+# believes spam has originated.
+#
+postscreen_dnsbl_action = enforce
+#
+# Increase the DNS lookup timeout for the configured local recursive
+# resolver by "unbound".
+# Default: 10s
+#
+postscreen_dnsbl_timeout = 30s
+#
+# Lists:
+# * zen.spamhaus.org
+# * bl.spamcop.net
+# * b.barracudacentral.org
+#
+# NOTE:
+# The "b.barracudacentral.org" RBL requires registration!
+# To test the access to this RBL:
+#     $ host 2.0.0.127.b.barracudacentral.org
+# If nothing returns, then access not granted to the used DNS, and
+# registration is required.
+# It seems that this RBL do not accept IPv6 address registration!
+# See: http://www.barracudacentral.org/rbl/how-to-use
+#
+# Credit: https://serverfault.com/a/14256
+#
+# Useful tools:
+# * Spam Database Lookup: http://www.dnsbl.info/
+#
+postscreen_dnsbl_sites =
+	zen.spamhaus.org,
+	bl.spamcop.net
+
+
+##
+## DEBUGGING CONTROL
+##
+
+# The debug_peer_level parameter specifies the increment in verbose
+# logging level when an SMTP client or server host name or address
+# matches a pattern in the debug_peer_list parameter.
+#
+debug_peer_level = 2
+
+# The debugger_command specifies the external command that is executed
+# when a Postfix daemon program is run with the -D option.
+#
+# Use "command .. & sleep 5" so that the debugger can attach before
+# the process marches on. If you use an X-based debugger, be sure to
+# set up your XAUTHORITY environment variable before starting Postfix.
+#
+# If you can't use X, use this to capture the call stack when a
+# daemon crashes. The result is in a file in the configuration
+# directory, and is named after the process name and the process ID.
+#
+debugger_command =
+	PATH=/bin:/usr/bin:/usr/local/bin; export PATH; (echo cont;
+	echo where) | gdb $daemon_directory/$process_name $process_id 2>&1
+	>$config_directory/$process_name.$process_id.log & sleep 5
+
+# vim: set ft=pfmain:
