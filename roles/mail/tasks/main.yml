@@ -9,6 +9,40 @@
     - dovecot
     - dovecot-pigeonhole
 
+- name: group - check vmail group
+  command: pw groupshow vmail
+  register: pw_cmd
+  ignore_errors: true
+  changed_when: false
+  tags: vmail
+
+- name: group - create vmail group
+  command: pw groupadd vmail -g 5000
+  when: pw_cmd.rc != 0
+  tags: vmail
+
+- name: user - check vmail user
+  command: pw usershow vmail
+  register: pw_cmd
+  ignore_errors: true
+  changed_when: false
+  tags: vmail
+
+- name: user - create vmail user
+  command: >
+    pw useradd vmail
+    -u 5000 -g vmail
+    -m -M 0700 -d "/home/vmail"
+    -s /sbin/nologin
+    -c "Virtual Mail User"
+  when: pw_cmd.rc != 0
+  tags: vmail
+
+
+#
+# OpenDKIM
+#
+
 - name: opendkim - create directory
   file:
     path: /usr/local/etc/mail/dkim
