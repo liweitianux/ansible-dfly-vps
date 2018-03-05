@@ -134,21 +134,6 @@ login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e 
 ## Mailbox settings and mail handling.
 ##
 
-# Home directories for virtual users, where Dovecot can save user-specific
-# files.  Home directory shouldn't be the same as mail directory with mbox
-# or Maildir formats (but with dbox/obox it's fine).
-mail_home = {{ mail.user.home }}/%d/%n
-
-# Location for users' mailboxes. The default is empty, which means that Dovecot
-# tries to find the mailboxes automatically. This won't work if the user
-# doesn't yet have any mail, so you should explicitly tell Dovecot the full
-# location.
-#
-# If you're using mbox, giving a path to the INBOX file (eg. /var/mail/%u)
-# isn't enough. You'll also need to tell Dovecot where the other mailboxes are
-# kept. This is called the "root mail directory", and it must be the first
-# path given in the mail_location setting.
-#
 # There are a few special variables you can use, eg.:
 #
 #   %u - username
@@ -157,8 +142,17 @@ mail_home = {{ mail.user.home }}/%d/%n
 #   %h - home directory
 #
 # See doc/wiki/Variables.txt for full list.
-#
-mail_location = maildir:{{ mail.user.home }}/%d/%n/mail:LAYOUT=fs
+
+# Home directories for virtual users, where Dovecot can save user-specific
+# files.  Home directory shouldn't be the same as mail directory with mbox
+# or Maildir formats (but with dbox/obox it's fine).
+mail_home = {{ mail.user.home }}/%d/%n
+
+# Location for users' mailboxes.  The default is empty, which means that
+# Dovecot tries to find the mailboxes automatically.  This won't work if
+# the user doesn't yet have any mail, so you should explicitly tell
+# Dovecot the full location.
+mail_location = maildir:~/mail:LAYOUT=fs
 
 # System user and group used to access mails.  If you use multiple,
 # userdb can override these by returning uid or gid fields.  You can
