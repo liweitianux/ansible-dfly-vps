@@ -59,7 +59,7 @@ mail:
     - liwt.net
     - aaronly.me
   dkim:
-    selector: mail
+    selector: default
     bits: 2048
     port: 8901
   dmarc:
