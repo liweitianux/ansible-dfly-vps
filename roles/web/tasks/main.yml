@@ -30,7 +30,7 @@
 
 - name: nginx - copy conf.d/ config directory
   copy:
-    src: conf.d/  # trailing '/' -> directory contents
+    src: nginx/conf.d/  # trailing '/' -> directory contents
     dest: /usr/local/etc/nginx/conf.d/
 
 - name: nginx - create sites/ directory
@@ -43,7 +43,7 @@
 
 - name: nginx - copy nginx.conf
   copy:
-    src: nginx.conf
+    src: nginx/nginx.conf
     dest: /usr/local/etc/nginx/nginx.conf
     # XXX: Validation runs aganist a temporary file, thus nginx fails to
     #      include other config files!
@@ -69,9 +69,8 @@
     src: "{{ item }}"
     dest: /usr/local/etc/acme/{{ item | basename }}
     mode: 0755
-  with_items:
-    - acme-client.sh
-    - deploy.sh
+  with_fileglob:
+    - "acme/*.sh"
 
 - name: (local) acme - check account private key existence
   become: false
