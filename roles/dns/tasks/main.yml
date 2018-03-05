@@ -73,7 +73,6 @@
 - name: NSD - generate zone files
   include_tasks: nsd-zone.yml zonefile={{ item }}
   with_items: "{{ zonefiles }}"
-  notify: reload-nsd
   tags: zones
 
 # NOTE: requires variable `zonefiles`
@@ -83,6 +82,7 @@
     dest: /usr/local/etc/nsd/nsd.conf
     validate: "nsd-checkconf %s"
   notify: reload-nsd
+  tags: zones
 
 - name: NSD - enable and start service
   command: rcenable nsd
