@@ -18,7 +18,7 @@
 {% for dev in user.devices|default([]) %}
 {{ name }}@{{ domain }}@{{ dev }}:{{ passdb[name].devices[dev] }}::::::user={{ name }}@{{ mydomain }}
 {% endfor %}{# devices #}
-{% if user.name != "root" and "aliases" in user %}
+{% if user.name != "root" and user.aliases is defined %}
 # aliases
 {% for alias in user.aliases|default([]) %}
 {{ alias }}@{{ domain }}:{{ passdb[name].pass }}::::::user={{ name }}@{{ mydomain }}
@@ -26,6 +26,6 @@
 {{ alias }}@{{ domain }}@{{ dev }}:{{ passdb[name].devices[dev] }}::::::user={{ name }}@{{ mydomain }}
 {% endfor %}{# devices #}
 {% endfor %}{# alias #}
-{% endif %}{# alias #}
+{% endif %}{# aliases #}
 {% endfor %}{# user #}
 {% endfor %}{# domain #}
