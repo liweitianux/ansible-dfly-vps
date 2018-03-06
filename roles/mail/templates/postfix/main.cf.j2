@@ -619,8 +619,7 @@ smtpd_tls_session_cache_timeout = 3600s
 # virtual mailbox address do not need to have a UNIX system account.
 #
 
-# Tell Postfix which domain(s) its virtual users live in.
-# The specified domain(s) is also the final destination; mail is
+# List of domain(s) that Postfix is the final destination; mail is
 # delivered via the $virtual_transport mail delivery transport.
 #
 # WARNING: NEVER list a "virtual_mailbox_domains" name as a
@@ -628,8 +627,11 @@ smtpd_tls_session_cache_timeout = 3600s
 #
 virtual_mailbox_domains = $config_directory/virtual-domains
 
-# Tell Postfix the virtual users for which its actually responsible
-# for mail delivery.
+# Specfiy the lookup table with all valid recipient addresses.  The
+# lookup result (i.e., the right column) is ignored by Postfix when
+# using a non-Postfix delivery agent ($virtual_transport).
+#
+# Credit: http://www.postfix.org/VIRTUAL_README.html#in_virtual_other
 #
 virtual_mailbox_maps = hash:$config_directory/virtual-users
 
