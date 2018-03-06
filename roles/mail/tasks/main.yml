@@ -92,17 +92,21 @@
     -exec sievec '{}' ';'
   tags: dovecot
 
-- name: dovecot - copy passwd
-  copy:
-    src: "{{ playbook_dir }}/private/dovecot/passwd"
+- name: dovecot - include passdb vars file
+  include_vars: "{{ playbook_dir }}/private/dovecot/passdb.yml"
+  tags: dovecot
+
+- name: dovecot - generate passwd
+  template:
+    src: dovecot/passwd.j2
     dest: /usr/local/etc/dovecot/passwd
     group: dovecot
     mode: 0440
   tags: dovecot
 
-- name: opendkim - generate config file
+- name: dovecot - generate config file
   template:
-    src: dovecot.conf.j2
+    src: dovecot/dovecot.conf.j2
     dest: /usr/local/etc/dovecot/dovecot.conf
   notify: reload-dovecot
   tags: dovecot

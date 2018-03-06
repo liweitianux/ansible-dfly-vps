@@ -47,9 +47,9 @@ disable_plaintext_auth = yes
 # Require a valid SSL client certificate or the authentication fails.
 #auth_ssl_require_client_cert = no
 
-# Take the username from client's SSL certificate, using 
+# Take the username from client's SSL certificate, using
 # X509_NAME_get_text_by_NID() which returns the subject's DN's
-# CommonName. 
+# CommonName.
 #auth_ssl_username_from_cert = no
 
 # Space separated list of wanted authentication mechanisms:
@@ -59,15 +59,10 @@ disable_plaintext_auth = yes
 auth_mechanisms = plain login
 
 # The password database used by Dovecot to authenticate users.
-#
 # See: https://wiki2.dovecot.org/PasswordDatabase
-#
-# Generate the password with:
-#     $ doveadm pw -s SSHA512
-#
 passdb {
     driver = passwd-file
-    args = scheme=SSHA512 username_format=%u /usr/local/etc/dovecot/passwd
+    args = scheme=SHA512-CRYPT username_format=%u /usr/local/etc/dovecot/passwd
 
     # This is not a database for denied users.
     deny = no
@@ -146,7 +141,7 @@ login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e 
 # Home directories for virtual users, where Dovecot can save user-specific
 # files.  Home directory shouldn't be the same as mail directory with mbox
 # or Maildir formats (but with dbox/obox it's fine).
-mail_home = {{ mail.vuser.home }}/%d/%n
+mail_home = {{ mail.vuser.home }}/%n
 
 # Location for users' mailboxes.  The default is empty, which means that
 # Dovecot tries to find the mailboxes automatically.  This won't work if
@@ -207,11 +202,11 @@ namespace inbox {
   #   created implicitly when it is first accessed.  The user can also
   #   be automatically subscribed to the mailbox after creation.  The
   #   following values are defined for this setting:
-  # 
+  #
   #     no        - Never created automatically.
   #     create    - Automatically created, but no automatic subscription.
   #     subscribe - Automatically created and subscribed.
-  #  
+  #
   # special_use:
   #   A space-separated list of SPECIAL-USE flags (RFC 6154) to use for
   #   the mailbox.  There are no validity checks, so you could specify
@@ -219,7 +214,7 @@ namespace inbox {
   #   other than the standard ones specified in the RFC:
   #
   #     \All      - This (virtual) mailbox presents all messages in the
-  #                 user's message store. 
+  #                 user's message store.
   #     \Archive  - This mailbox is used to archive messages.
   #     \Drafts   - This mailbox is used to hold draft messages.
   #     \Flagged  - This (virtual) mailbox presents all messages in the
@@ -263,16 +258,16 @@ namespace inbox {
   }
 
   # If you have a virtual "All messages" mailbox:
-  #mailbox virtual/All {
-  #  special_use = \All
-  #  comment = All my messages
-  #}
+  # mailbox virtual/All {
+  #   special_use = \All
+  #   comment = All my messages
+  # }
 
   # If you have a virtual "Flagged" mailbox:
-  #mailbox virtual/Flagged {
-  #  special_use = \Flagged
-  #  comment = All my flagged messages
-  #}
+  # mailbox virtual/Flagged {
+  #   special_use = \Flagged
+  #   comment = All my flagged messages
+  # }
 }
 
 
@@ -348,7 +343,7 @@ ssl_dh_parameters_length = 2048
 # Set this only if you intend to use "ssl_verify_client_cert=yes".
 # The file should contain the CA certificate(s) followed by the
 # matching CRL(s). (e.g. ssl_ca = </etc/ssl/certs/ca.pem)
-#ssl_ca = 
+#ssl_ca =
 
 # Request client to send a certificate.  If you also want to require
 # it, set "auth_ssl_require_client_cert=yes" in auth section.
@@ -392,29 +387,28 @@ imap_idle_notify_interval = 4 mins
 
 # Workarounds for various client bugs:
 #   delay-newmail:
-#     Send EXISTS/RECENT new mail notifications only when replying to NOOP
-#     and CHECK commands. Some clients ignore them otherwise, for example OSX
-#     Mail (<v2.1). Outlook Express breaks more badly though, without this it
-#     may show user "Message no longer in server" errors. Note that OE6 still
-#     breaks even with this workaround if synchronization is set to
-#     "Headers Only".
+#     Send EXISTS/RECENT new mail notifications only when replying to
+#     NOOP and CHECK commands.
 #   tb-extra-mailbox-sep:
-#     Thunderbird gets somehow confused with LAYOUT=fs (mbox and dbox) and
-#     adds extra '/' suffixes to mailbox names. This option causes Dovecot to
-#     ignore the extra '/' instead of treating it as invalid mailbox name.
+#     Thunderbird gets somehow confused with LAYOUT=fs (mbox and dbox)
+#     and adds extra '/' suffixes to mailbox names. This option causes
+#     Dovecot to ignore the extra '/' instead of treating it as invalid
+#     mailbox name.
 #   tb-lsub-flags:
 #     Show \Noselect flags for LSUB replies with LAYOUT=fs (e.g. mbox).
-#     This makes Thunderbird realize they aren't selectable and show them
-#     greyed out, instead of only later giving "not selectable" popup error.
+#     This makes Thunderbird realize they aren't selectable and show
+#     them greyed out, instead of only later giving "not selectable"
+#     popup error.
 #
 # The list is space-separated.
 imap_client_workarounds = delay-newmail tb-extra-mailbox-sep
 
 protocol imap {
-  # Space separated list of plugins to load (default is global mail_plugins).
+  # Space separated list of plugins to load
   #mail_plugins = $mail_plugins
 
-  # Maximum number of IMAP connections allowed for a user from each IP address.
+  # Maximum number of IMAP connections allowed for a user from each IP
+  # address.
   # NOTE: The username is compared case-sensitively.
   #mail_max_userip_connections = 10
 }
