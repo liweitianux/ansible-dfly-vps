@@ -146,7 +146,7 @@ login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e 
 # Home directories for virtual users, where Dovecot can save user-specific
 # files.  Home directory shouldn't be the same as mail directory with mbox
 # or Maildir formats (but with dbox/obox it's fine).
-mail_home = {{ mail.user.home }}/%d/%n
+mail_home = {{ mail.vuser.home }}/%d/%n
 
 # Location for users' mailboxes.  The default is empty, which means that
 # Dovecot tries to find the mailboxes automatically.  This won't work if
@@ -157,18 +157,18 @@ mail_location = maildir:~/mail:LAYOUT=fs
 # System user and group used to access mails.  If you use multiple,
 # userdb can override these by returning uid or gid fields.  You can
 # use either numbers or names.
-mail_uid = {{ mail.user.name }}
-mail_gid = {{ mail.user.name }}
+mail_uid = {{ mail.vuser.name }}
+mail_gid = {{ mail.vuser.name }}
 
 # Use the dedicated virtual mail user to restrict the temporary
 # privileged operations.
-mail_privileged_group = {{ mail.user.name }}
+mail_privileged_group = {{ mail.vuser.name }}
 
 # Only allow Dovecot use the dedicated virtual mail user.
-first_valid_uid = {{ mail.user.id }}
-last_valid_uid  = {{ mail.user.id }}
-first_valid_gid = {{ mail.user.id }}
-last_valid_gid  = {{ mail.user.id }}
+first_valid_uid = {{ mail.vuser.id }}
+last_valid_uid  = {{ mail.vuser.id }}
+first_valid_gid = {{ mail.vuser.id }}
+last_valid_gid  = {{ mail.vuser.id }}
 
 # Mailbox list indexes can be used to optimize IMAP STATUS commands.
 # They are also required for IMAP NOTIFY extension to be enabled.
@@ -305,8 +305,8 @@ service auth {
   # Anything else causes a failure.
   unix_listener auth-userdb {
     mode = 0600
-    user = {{ mail.user.name }}
-    group = {{ mail.user.name }}
+    user = {{ mail.vuser.name }}
+    group = {{ mail.vuser.name }}
   }
 
   # Postfix smtp-auth

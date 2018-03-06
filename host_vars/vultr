@@ -58,10 +58,10 @@ mail:
   domains:
     - liwt.net  # primary
     - aaronly.me
-  # Virtual mail user for local delivery (e.g., by Dovecot))
-  user:
-    name: vmail
-    id: 5000
+  # Virtual user for local mail delivery (e.g., by Dovecot)
+  vuser:
+    name: vmail  # user & group name
+    id: 5000  # uid & gid
     home: /home/vmail
   dkim:
     selector: default
