@@ -179,7 +179,7 @@
 - name: postfix - update lookup tables
   command: postmap /usr/local/etc/postfix/{{ item }}
   with_items:
-    - virtual
+    - virtual-aliases
     - virtual-users
   notify: reload-postfix
   tags: postfix

@@ -1,0 +1,35 @@
+#
+# /usr/local/etc/postfix/virtual-aliases
+# Postfix: $virtual_alias_maps
+#
+# Lookup table that alias specific mail addresses or domains to other
+# local or remote address.  Therefore, mails for the left-hand side
+# addresses (i.e., aliases) will be *forwarded* to the right-hand side
+# addresses.
+#
+# Here, we alias all valid (receiving) mail addresses to the virtual(8)
+# destinations, as listed in $virtual_mailbox_maps .
+#
+# Aaron LI
+#
+
+#======#
+# NOTE #  Once modified this file, run "postmap" on it!
+#======#
+
+# Alias address                     | Recipient for virtual(8)
+# ---------------------------------------------------------------------
+{% set mydomain = mail.domains[0] %}
+{% for domain in mail.domains %}
+# [domain: {{ domain }}]
+{% for user in mail.userdb %}
+# (user: {{ user.name }})
+{{ user.name }}@{{ domain }}		{{ user.name }}@{{ mydomain }}
+{% if user.aliases is defined  %}
+# aliases
+{% for alias in user.aliases|default([]) %}
+{{ alias }}@{{ domain }}		{{ user.name }}@{{ mydomain }}
+{% endfor %}{# alias #}
+{% endif %}{# aliases #}
+{% endfor %}{# user #}
+{% endfor %}{# domain #}
