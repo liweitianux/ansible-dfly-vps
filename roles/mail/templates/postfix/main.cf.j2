@@ -503,10 +503,11 @@ smtpd_sender_restrictions =
 	reject_unknown_sender_domain,
 	reject_sender_login_mismatch
 
-# A lookup table maps between the envelope sender addresses and SASL
-# login names (i.e., the owners).
+# A lookup table maps between the SASL login names that own the sender
+# (MAIL FROM) addresses, i.e., the address(es) the user allowed to sent
+# mail from.
 #
-smtpd_sender_login_maps = $virtual_mailbox_maps
+smtpd_sender_login_maps = pcre:$config_directory/login-maps.pcre
 
 # Use permanet 550 errors for rejections, to stop retries.
 # Tell Postfix to reject messages that match the rejection criteria

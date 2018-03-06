@@ -1,0 +1,33 @@
+#
+# $config_directory/login-maps.pcre
+# Postfix: smtpd_sender_login_maps
+#
+# Lookup table with the SASL login names that own the sender
+# (MAIL FROM) addresses.
+#
+# NOTE:
+# Add "reject_sender_login_mismatch" to $smtpd_sender_restrictions .
+#
+# NOTE
+# ----
+# By default an SMTP client may specify *any* envelope sender address
+# in the "MAIL FROM" command, because the server only knows the remote
+# client's hostname and IP address, but not the user who controls the
+# remote client.
+# But the Postfix SMTP server knowns who the sender is once the SASL
+# authentication is used.  This table file provides the maps betwee
+# envelope sender addresses and SASL login names, which is used by the
+# server to decide if the SASL authenticated client is allowed to use
+# a particular envelope sender address.
+#
+# References:
+# * Postfix SASL HOWTO - Envelope sender address authorization
+#   http://www.postfix.org/SASL_README.html#server_sasl_authz
+#
+
+# Enforce that user can only send from their own sender address.
+# Credit: https://serverfault.com/a/710235/387898
+#
+# Envelope sender       | Owner (SASL login names)
+# ---------------------------------------------------------------------
+/^(.*)$/                ${1}
