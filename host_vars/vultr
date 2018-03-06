@@ -58,6 +58,31 @@ mail:
   domains:
     - liwt.net  # primary
     - aaronly.me
+  # user database, for both Postfix (receiving mails and transport to
+  # Dovecot) and Dovecot (auth users and deliver mails to disk)
+  userdb:
+    - name: root
+      aliases:
+        - postmaster
+        - hostmaster
+        - webmaster
+        - abuse
+    - name: aly
+      # for app/device-specific passwords
+      devices:
+        - laptop
+        - office
+        - phone
+        - tablet
+    - name: lulu
+    - name: wt
+      aliases:
+        - weitian
+      devices:
+        - laptop
+        - office
+        - phone
+        - tablet
   # Virtual user for local mail delivery (e.g., by Dovecot)
   vuser:
     name: vmail  # user & group name

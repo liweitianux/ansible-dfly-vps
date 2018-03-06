@@ -41,6 +41,6 @@
 # Envelope sender               | Owner (SASL login names)
 # ---------------------------------------------------------------------
 {% set mydomain = mail.domains[0] %}
-{% for user in ["aly", "wt", "lulu", "root"] %}
-{{ user }}@{{ mydomain }}	{{ user }}@{{ mydomain }}
+{% for user in mail.userdb %}
+{{ user.name }}@{{ mydomain }}	{{ user.name }}@{{ mydomain }}
 {% endfor %}

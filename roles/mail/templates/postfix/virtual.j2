@@ -29,17 +29,13 @@
 # ---------------------------------------------------------------------
 {% set mydomain = mail.domains[0] %}
 {% for domain in mail.domains %}
-{% for user in ["aly", "wt", "lulu"] %}
-{{ user }}@{{ domain }}		{{ user }}@{{ mydomain }}
+# [domain: {{ domain }}]
+{% for user in mail.userdb %}
+# (user: {{ user.name }})
+{{ user.name }}@{{ domain }}		{{ user.name }}@{{ mydomain }}
+# aliases (if any)
+{% for alias in user.aliases|default([]) %}
+{{ alias }}@{{ domain }}		{{ user.name }}@{{ mydomain }}
 {% endfor %}
-{% endfor %}
-#
-{% for domain in mail.domains %}
-weitian@{{ domain }}		wt@{{ mydomain }}
-{% endfor %}
-#
-{% for domain in mail.domains %}
-{% for user in ["postmaster", "hostmaster", "webmaster", "root", "abuse"] %}
-{{ user }}@{{ domain }}		root@{{ mydomain }}
 {% endfor %}
 {% endfor %}
