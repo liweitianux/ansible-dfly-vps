@@ -257,6 +257,20 @@ namespace inbox {
     auto = subscribe
   }
 
+  # Prevent duplicate "Sent Mail", "Sent Messages", "Archives", etc.
+  mailbox "Sent Mail" {
+    special_use = \Sent
+    auto = no
+  }
+  mailbox "Sent Messages" {
+    special_use = \Sent
+    auto = no
+  }
+  mailbox Archives {
+    special_use = \Archive
+    auto = no
+  }
+
   # If you have a virtual "All messages" mailbox:
   # mailbox virtual/All {
   #   special_use = \All
