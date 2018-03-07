@@ -5,9 +5,11 @@
 # References
 # ----------
 # * Dovecot - Quick Configuration
-#   http://wiki2.dovecot.org/QuickConfiguration
+#   https://wiki.dovecot.org/QuickConfiguration
 # * Dovecot - SSL Configuration
 #   https://wiki.dovecot.org/SSL/DovecotConfiguration
+# * Dovecot - Variables
+#   https://wiki.dovecot.org/Variables
 # * Multiple domains and virtual users (Postfix/Dovecot/SASL)
 #   http://void.ideabite.org/2013/07/28/multiple-domains-and-virtual-users/
 #
@@ -97,8 +99,8 @@ auth_verbose_passwords = sha1
 # the client sent before any changes by auth process, to keep track of
 # the actual usages.
 #
-login_log_format_elements = user=<%{orig_user}> method=%m \
-                            rip=%r lip=%l mpid=%e %c
+login_log_format_elements = login_user=<%{orig_user}> user=<%u> \
+                            method=%m rip=%r lip=%l mpid=%e %k
 
 
 ##
