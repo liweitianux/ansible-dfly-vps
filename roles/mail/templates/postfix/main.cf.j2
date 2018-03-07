@@ -13,6 +13,9 @@
 #   http://www.postfix.org/SASL_README.html
 # * Postfix Virtual Domain Hosting Howto
 #   http://www.postfix.org/VIRTUAL_README.html
+# * Fighting Spam - What can I do as an: Email Administrator, Domain
+#   Owner, or User?
+#   https://serverfault.com/a/419475/387898
 #
 #
 # Aaron LI
@@ -23,8 +26,8 @@
 
 # COMPATIBILITY
 #
-# The compatibility_level determines what default settings Postfix
-# will use for main.cf and master.cf settings. These defaults will
+# The compatibility_level determines what default settings Postfix will
+# use for "main.cf" and "master.cf" settings.  These defaults will
 # change over time.
 #
 # To avoid breaking things, Postfix will use backwards-compatible
@@ -50,7 +53,7 @@ compatibility_level = 2
 #soft_bounce = no
 
 # INTERNET HOST AND DOMAIN NAMES
-# 
+#
 # The myhostname parameter specifies the internet hostname of this
 # mail system.  The default is to use the fully-qualified domain name
 # from gethostname().  $myhostname is used as a default value for many
@@ -66,7 +69,7 @@ myhostname = mail.{{ mydomain }}
 mydomain = {{ mydomain }}
 
 # SENDING MAIL
-# 
+#
 # The myorigin parameter specifies the domain that locally-posted
 # mail appears to come from. The default is to append $myhostname,
 # which is fine for small sites.  If you run a domain with multiple
@@ -175,16 +178,16 @@ mydestination = $myhostname, localhost.$mydomain, localhost
 #
 # By default (mynetworks_style = subnet), Postfix "trusts" SMTP
 # clients in the same IP subnetworks as the local machine.
-# 
+#
 # Specify "mynetworks_style = class" when Postfix should "trust" SMTP
 # clients in the same IP class A/B/C networks as the local machine.
 # Don't do this with a dialup site - it would cause Postfix to "trust"
 # your entire provider's network.  Instead, specify an explicit
 # mynetworks list by hand, as described below.
-#  
+#
 # Specify "mynetworks_style = host" when Postfix should "trust"
 # only the local machine.
-# 
+#
 mynetworks_style = host
 
 # The relay_domains parameter restricts what destinations this system will
@@ -196,7 +199,7 @@ mynetworks_style = host
 # - from "untrusted" clients to destinations that match $relay_domains or
 #   subdomains thereof, except addresses with sender-specified routing.
 # The default relay_domains value is $mydestination.
-# 
+#
 # In addition to the above, the Postfix SMTP server by default accepts mail
 # that Postfix is final destination for:
 # - destinations that match $inet_interfaces or $proxy_interfaces,
@@ -204,7 +207,7 @@ mynetworks_style = host
 # - destinations that match $virtual_alias_domains,
 # - destinations that match $virtual_mailbox_domains.
 # These destinations do not need to be listed in $relay_domains.
-# 
+#
 # Specify a list of hosts or domains, /file/name patterns or type:name
 # lookup tables, separated by commas and/or whitespace.  Continue
 # long lines by starting the next line with whitespace. A file name
@@ -479,33 +482,34 @@ smtpd_data_restrictions = reject_unauth_pipelining
 # Envelope sender address control
 #
 # * reject_unknown_sender_domain:
-#       Don't accept mail from domains that don't exist.
+#       Reject the request when Postfix is not the final destination
+#       for the sender address, and the "MAIL FROM" domain has (1) no
+#       DNS MX and no DNS A record, or (2) a malformed MX record.
 # * reject_sender_login_mismatch:
-#       Reject the sender address in the "MAIL FROM" command if
-#       $smtpd_sender_login_maps does not specify the SMTP client's login
-#       name (i.e., SASL authenticated) as an owner of that address. 
+#       This subsumes the functionality of both
+#       'reject_{un,}authenticated_sender_login_mismatch' (see below).
+# * reject_authenticated_sender_login_mismatch:
+#       Reject the request when the client is (SASL) logged in (i.e.,
+#       authenticated), but the client's login name doesn't own the
+#       "MAIL FROM" address according to $smtpd_sender_login_maps .
+# * reject_unauthenticated_sender_login_mismatch:
+#       Reject the request when $smtpd_sender_login_maps specifies an
+#       owner for the "MAIL FROM" address, but the client is not (SASL)
+#       logged in as that address' owner (i.e., unauthenticated).
 #
-# WARNING: Sender address verficiation may cause your site to be
-#          blacklisted by some providers.
+# WARNING: Sender address verficiation may cause your server to be
+#          blacklisted by some providers, due to the possibly frequent
+#          address probe (try to connect but cancel mail delivery).
 #
-# NOTE:
-# By default an SMTP client may specify *any* envelope sender address
-# in the "MAIL FROM" command, because the server only knows the remote
-# client's hostname and IP address, but not the user who controls the
-# remote client.
-# But the Postfix SMTP server knowns who the sender is once the SASL
-# authentication is used.  Given a table of envelope sender addresses
-# and SASL login names ($smtpd_sender_login_maps), the server can
-# decide if the SASL authenticated client is allowed to use a particular
-# envelope sender address.
-#
-smtpd_sender_restrictions =
-	reject_unknown_sender_domain,
-	reject_sender_login_mismatch
+smtpd_sender_restrictions = reject_unknown_sender_domain
 
 # A lookup table maps between the SASL login names that own the sender
-# (MAIL FROM) addresses, i.e., the address(es) the user allowed to sent
-# mail from.
+# (MAIL FROM) addresses.
+#
+# WARNING: see the explanation in this file on why only enable
+#          'reject_sender_login_mismatch' for the "submission" service
+#          (see "master.cf")  but not the smtpd(8) service (i.e., the
+#          above $smtpd_sender_restrictions).
 #
 smtpd_sender_login_maps = pcre:$config_directory/login-maps.pcre
 

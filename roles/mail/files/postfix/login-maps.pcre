@@ -3,7 +3,8 @@
 # Postfix: smtpd_sender_login_maps
 #
 # Lookup table with the SASL login names that own the sender
-# (MAIL FROM) addresses.
+# (MAIL FROM) addresses, i.e., the address(es) that the client is
+# allowed to sent mail from.
 #
 # NOTE:
 # Add "reject_sender_login_mismatch" to $smtpd_sender_restrictions .
@@ -15,7 +16,7 @@
 # client's hostname and IP address, but not the user who controls the
 # remote client.
 # But the Postfix SMTP server knowns who the sender is once the SASL
-# authentication is used.  This table file provides the maps betwee
+# authentication is used.  This lookup table provides the maps betwee
 # envelope sender addresses and SASL login names, which is used by the
 # server to decide if the SASL authenticated client is allowed to use
 # a particular envelope sender address.
@@ -27,6 +28,13 @@
 
 # Enforce that user can only send from their own sender address.
 # Credit: https://serverfault.com/a/710235/387898
+#
+# WARNING: Since we use a regex here which matches all sender addresses,
+#          thus we should enable the login mismatch rejection *only* for
+#          the "submission" service from user/MUA (see "master.cf"), but
+#          NOT* for the smtpd(8) service.  Otherwise, mails from other
+#          mail servers will be rejected with error:
+#          "Sender address rejected: not logged in".
 #
 # Envelope sender       | Owner (SASL login names)
 # ---------------------------------------------------------------------
