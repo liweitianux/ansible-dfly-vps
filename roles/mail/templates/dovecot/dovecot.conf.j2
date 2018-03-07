@@ -39,11 +39,6 @@ listen = *, ::
 # SSL/TLS is used (LOGINDISABLED capability).
 disable_plaintext_auth = yes
 
-# Space separated list of realms for SASL authentication mechanisms
-# that need them.  You can leave it empty if you don't want to support
-# multiple realms.
-#auth_realms =
-
 # Require a valid SSL client certificate or the authentication fails.
 #auth_ssl_require_client_cert = no
 
@@ -59,40 +54,21 @@ disable_plaintext_auth = yes
 auth_mechanisms = plain login
 
 # The password database used by Dovecot to authenticate users.
-# See: https://wiki2.dovecot.org/PasswordDatabase
+# See: https://wiki.dovecot.org/PasswordDatabase
 passdb {
     driver = passwd-file
-    args = scheme=SHA512-CRYPT username_format=%u /usr/local/etc/dovecot/passwd
-
-    # This is not a database for denied users.
-    deny = no
-    # This is not a database for master users, which can log in as
-    # other users.
-    master = no
-    pass = no
-    skip = never
-    result_failure = continue
-    result_internalfail = continue
-    result_success = return-ok
+    args = scheme=SHA512-CRYPT \
+           username_format=%u \
+           /usr/local/etc/dovecot/passdb
 }
 
 # User database, which will be looked up to obtain user's information
 # after the user has been successfully authenticated.  The userdb lookup
 # is also done by LDA to find out how to deliver mails for the user.
-#
-# Dovecot doesn't need to verify the username or the password.
-#
-# See: https://wiki2.dovecot.org/UserDatabase
-#
+# See: https://wiki.dovecot.org/UserDatabase
 userdb {
-    driver = static
-    #
-    # Set 'allow_all_users=yes' will make Dovecot ignore the user lookup
-    # from the userdb and entirely rely on the passdb lookup.  Therefore,
-    # the username may be repeated to have multiple passwords, which can
-    # be utilized to achieve device-specific passwords.
-    #
-    args = allow_all_users=yes
+    driver = passwd-file
+    args = username_format=%n /usr/local/etc/dovecot/userdb
 }
 
 
@@ -121,7 +97,8 @@ auth_verbose_passwords = sha1
 # the client sent before any changes by auth process, to keep track of
 # the actual usages.
 #
-login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e %c
+login_log_format_elements = user=<%{orig_user}> method=%m \
+                            rip=%r lip=%l mpid=%e %c
 
 
 ##
@@ -129,24 +106,14 @@ login_log_format_elements = user=<%{orig_user}> method=%m rip=%r lip=%l mpid=%e 
 ## Mailbox settings and mail handling.
 ##
 
-# There are a few special variables you can use, eg.:
-#
-#   %u - username
-#   %n - user part in user@domain, same as %u if there's no domain
-#   %d - domain part in user@domain, empty if there's no domain
-#   %h - home directory
-#
-# See doc/wiki/Variables.txt for full list.
-
-# Home directories for virtual users, where Dovecot can save user-specific
-# files.  Home directory shouldn't be the same as mail directory with mbox
-# or Maildir formats (but with dbox/obox it's fine).
+# Home for virtual users, where Dovecot can save user-specific files,
+# e.g., custom Sieve filters.
+# NOTE: home specified in the userdb will override this.
 mail_home = {{ mail.vuser.home }}/%n
 
-# Location for users' mailboxes.  The default is empty, which means that
-# Dovecot tries to find the mailboxes automatically.  This won't work if
-# the user doesn't yet have any mail, so you should explicitly tell
-# Dovecot the full location.
+# Format and location for users' mailboxes.
+# * '~' will be expanded to $mail_home (i.e., user's home)
+# * LAYOUT=fs : use filesystem directories for mailbox folders
 mail_location = maildir:~/mail:LAYOUT=fs
 
 # System user and group used to access mails.  If you use multiple,

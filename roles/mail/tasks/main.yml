@@ -96,12 +96,15 @@
   include_vars: "{{ playbook_dir }}/private/dovecot/passdb.yml"
   tags: dovecot
 
-- name: dovecot - generate passwd
+- name: dovecot - generate passdb and userdb
   template:
-    src: dovecot/passwd.j2
-    dest: /usr/local/etc/dovecot/passwd
+    src: dovecot/{{ item }}.j2
+    dest: /usr/local/etc/dovecot/{{ item }}
     group: dovecot
     mode: 0440
+  with_items:
+    - passdb
+    - userdb
   tags: dovecot
 
 - name: dovecot - generate config file

@@ -1,0 +1,46 @@
+#
+# /usr/local/etc/dovecot/passdb
+# Dovecot authentication database in passwd-file format.
+#
+# References:
+# * Dovecot - PasswordDatabase
+#   https://wiki.dovecot.org/PasswordDatabase
+# * Dovecot - AuthDatabase / PasswdFile
+#   https://wiki.dovecot.org/AuthDatabase/PasswdFile
+#
+#
+# Aaron LI
+#
+
+# Fields
+# ------
+# user:password:(uid):(gid):(gecos):(home):(shell):extra_fields
+# The ()-enclosed fields are ignored by Dovecot passdb lookup.
+# ----------------------------------------------------------------------
+{% set mydomain = mail.domains[0] %}
+{% for domain in mail.domains %}
+# [domain: {{ domain }}]
+{% for user in mail.userdb %}
+{% set name = user.name %}
+{% set email = name + "@" + domain %}
+{% set pass = passdb[name].pass %}
+# (user: {{ name }})
+{{ email }}:{{ pass }}::::::user={{ email }}
+{% for dev in user.devices|default([]) %}
+{% set pass = passdb[name].devices[dev] %}
+{{ email }}@{{ dev }}:{{ pass }}::::::user={{ email }}
+{% endfor %}{# devices #}
+{% if name != "root" and user.aliases is defined %}
+# aliases
+{% for alias in user.aliases|default([]) %}
+{% set email = alias + "@" + domain %}
+{{ email }}:{{ pass }}::::::user={{ email }}
+{% for dev in user.devices|default([]) %}
+{% set pass = passdb[name].devices[dev] %}
+{{ email }}@{{ dev }}:{{ pass }}::::::user={{ email }}
+{% endfor %}{# devices #}
+{% endfor %}{# alias #}
+{% endif %}{# aliases #}
+{% endfor %}{# user #}
+{% endfor %}{# domain #}
+# EOF

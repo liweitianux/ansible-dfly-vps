@@ -1,0 +1,42 @@
+#
+# /usr/local/etc/dovecot/userdb
+# Dovecot user database in passwd-file format.
+#
+# References:
+# * Dovecot - UserDatabase
+#   https://wiki.dovecot.org/UserDatabase
+# * Dovecot - VirtualUsers
+#   https://wiki.dovecot.org/VirtualUsers
+# * Dovecot - AuthDatabase / PasswdFile
+#   https://wiki.dovecot.org/AuthDatabase/PasswdFile
+#
+#
+# Aaron LI
+#
+
+# NOTE
+# ----
+# We explicitly specify the *home* here, allowing that a user has the
+# same mailboxes with all its alias(es).
+#
+# Fields
+# ------
+# user:(password):uid:gid:(gecos):home:(shell):extra_fields
+# * uid - override the global $mail_uid
+# * gid - override the global $mail_gid
+# * home - override the global $mail_home
+# The ()-enclosed fields are ignored by Dovecot userdb lookup.
+# ----------------------------------------------------------------------
+{% for user in mail.userdb %}
+{% set name = user.name %}
+{% set home = mail.vuser.home + "/" + name %}
+# (user: {{ name }})
+{{ name }}:::::{{ home }}::
+{% if name != "root" and user.aliases is defined %}
+# aliases
+{% for alias in user.aliases|default([]) %}
+{{ alias }}:::::{{ home }}::
+{% endfor %}{# alias #}
+{% endif %}{# aliases #}
+{% endfor %}{# user #}
+# EOF
