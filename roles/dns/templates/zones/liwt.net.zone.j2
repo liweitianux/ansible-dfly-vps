@@ -34,12 +34,9 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-vultr       IN  CNAME   @
-www         IN  CNAME   @
-git         IN  CNAME   @
-carddav     IN  CNAME   @
-caldav      IN  CNAME   @
-*           IN  CNAME   @
+{% for name in ["vultr", "www", "git", "carddav", "caldav", "*"] %}
+{{ name }}  IN  CNAME   @
+{% endfor %}
 
 ; Mail server
 {% if domain == network.domain %}

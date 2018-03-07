@@ -1,5 +1,6 @@
-{% set hostmaster = "hostmaster." + network.domain %}
+; -*- mode: dns; -*-
 ; {{ ansible_managed }}
+{% set hostmaster = "hostmaster." + network.domain %}
 $ORIGIN     {{ domain }}.
 $TTL        {{ dns.ttl }}
 

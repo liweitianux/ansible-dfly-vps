@@ -1,5 +1,6 @@
-{% set hostmaster = "hostmaster." + network.domain %}
+; -*- mode: dns; -*-
 ; {{ ansible_managed }}
+{% set hostmaster = "hostmaster." + network.domain %}
 $ORIGIN     {{ domain }}.
 $TTL        {{ dns.ttl }}
 
@@ -20,9 +21,8 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-www         IN  CNAME   @
-g           IN  CNAME   @
-zw          IN  CNAME   @
-*           IN  CNAME   @
+{% for name in ["www", "g", "zw", "*"] %}
+{{ name }}  IN  CNAME   @
+{% endfor %}
 
 ; vim: set ft=bindzone:
