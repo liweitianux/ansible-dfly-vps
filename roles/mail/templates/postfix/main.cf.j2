@@ -19,7 +19,7 @@
 #
 #
 # Aaron LI
-# 2017-04-15
+# Created: 2017-04-15
 #
 
 {% set mydomain = mail.domains[0] %}
@@ -428,30 +428,7 @@ smtpd_relay_restrictions =
 	permit_sasl_authenticated,
 	reject_unauth_destination
 
-# WARNING: Recipient address verficiation may cause an increased load
-#          on down-stream servers in the case of a dictionary attack
-#          or a flood of backscatter bounces.
-#
-smtpd_recipient_restrictions =
-	reject_unknown_reverse_client_hostname,
-	warn_if_reject reject_unknown_client_hostname,
-	reject_non_fqdn_recipient,
-	reject_unknown_sender_domain,
-	reject_unknown_recipient_domain,
-	permit_mynetworks,
-	permit_sasl_authenticated,
-	reject_invalid_hostname,
-	reject_non_fqdn_sender
-
-# Block clients that speak too early.
-# Reject the request when the client sends SMTP commands ahead of
-# time where it is not allowed, or when the client sends SMTP commands
-# ahead of time without knowing that Postfix actually supports ESMTP
-# command pipelining.
-#
-smtpd_data_restrictions = reject_unauth_pipelining
-
-# Envelope sender address control
+# Recipient and sender addresses control
 #
 # * reject_unknown_sender_domain:
 #       Reject the request when Postfix is not the final destination
@@ -469,11 +446,30 @@ smtpd_data_restrictions = reject_unauth_pipelining
 #       owner for the "MAIL FROM" address, but the client is not (SASL)
 #       logged in as that address' owner (i.e., unauthenticated).
 #
-# WARNING: Sender address verficiation may cause your server to be
-#          blacklisted by some providers, due to the possibly frequent
-#          address probe (try to connect but cancel mail delivery).
+# WARNING: Recipient and sender address verification may cause your
+#          server to be blacklisted by some providers, due to the
+#          possibly frequent address probe (try to connect but cancel
+#          mail delivery).  This also increases system load, which may
+#          be a problem in the case of a dictionary attack or a flood
+#          of backscatter bounces.
 #
-smtpd_sender_restrictions = reject_unknown_sender_domain
+# Credit: https://serverfault.com/a/540614/387898
+#
+smtpd_recipient_restrictions =
+	reject_unknown_reverse_client_hostname,
+	warn_if_reject reject_unknown_client_hostname,
+	reject_non_fqdn_sender,
+	reject_unknown_sender_domain,
+	reject_non_fqdn_recipient,
+	reject_unknown_recipient_domain
+
+# Block clients that speak too early.
+# Reject the request when the client sends SMTP commands ahead of
+# time where it is not allowed, or when the client sends SMTP commands
+# ahead of time without knowing that Postfix actually supports ESMTP
+# command pipelining.
+#
+smtpd_data_restrictions = reject_unauth_pipelining
 
 # A lookup table maps between the SASL login names that own the sender
 # (MAIL FROM) addresses.
@@ -484,17 +480,6 @@ smtpd_sender_restrictions = reject_unknown_sender_domain
 #          above $smtpd_sender_restrictions).
 #
 smtpd_sender_login_maps = pcre:$config_directory/login-maps.pcre
-
-# Use permanet 550 errors for rejections, to stop retries.
-# Tell Postfix to reject messages that match the rejection criteria
-# with a 550 error, which should tell the remote server that its
-# message wasn't delivered and it shouldn't try to send it again
-# (as opposed to the default 450 error, which implies that the
-# remote server should retry sending).
-#
-#unknown_address_reject_code = 550
-#unknown_client_reject_code = 550
-#unknown_hostname_reject_code = 550
 
 
 ##
