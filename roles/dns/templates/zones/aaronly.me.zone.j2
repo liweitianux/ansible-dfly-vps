@@ -34,6 +34,7 @@ liteserver  IN  AAAA    2a04:52c0:101:55a::218
 ; Mail server
 {% if domain != network.domain %}
 @           IN  MX      10  mail.{{ network.domain }}.
+mail        IN  CNAME   mail.{{ network.domain }}.
 {% endif %}
 @           IN  TXT     "v=spf1 mx -all"
 @           IN  TXT     "google-site-verification={{ mail['google-site-verification'][domain] }}"
