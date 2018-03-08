@@ -1,3 +1,6 @@
 ---
+- name: restart-syslogd
+  command: rcrestart syslogd
+
 - name: reload-pf
   command: rcreload pf

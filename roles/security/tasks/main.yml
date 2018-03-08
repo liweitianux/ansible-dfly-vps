@@ -4,6 +4,7 @@
     src: pf.conf.j2
     dest: /etc/pf.conf
     validate: "pfctl -nf %s"
+  notify: reload-pf
 
 - name: firewall - enable PF
   command: rcenable pf
@@ -18,6 +19,7 @@
     block: |
       # Block SSH auth failures using "sshlockout" and "pf"
       auth.info;authpriv.info	|exec /usr/sbin/sshlockout -pf bruteforce
+  notify: restart-syslogd
 
 - name: periodic - copy clean-pf script
   copy:
