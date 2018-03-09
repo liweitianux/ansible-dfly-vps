@@ -326,34 +326,34 @@ block log quick from <bruteforce>
 block drop in quick on $ext_if proto { tcp, udp } from any to any \
       port { netbios-ns, netbios-dgm, netbios-ssn, microsoft-ds, nfsd }
 
-# Use overload tables to protect restrictive services (e.g., SSH)
+# Use overload table(s) to protect restrictive services (e.g., SSH)
+# against brute force attacks.
 #
-#   * max-src-conn :
+#   * max-src-conn n:
 #     number of simultaneous connections allowed from one host
-#   * max-src-conn-rate :
+#   * max-src-conn-rate n/m:
 #     rate of new connections allowed from any single host
-#     per number of seconds (here: 4 connections every 30 seconds).
-#   * overload <bruteforce> :
+#     per number of seconds (n connections every m seconds).
+#   * overload <bruteforce>:
 #     any host which exceeds these limits gets its address added to
 #     the "bruteforce" table.
-#   * flush global :
-#     when a host reaches the limit, that all (global) of that host's
-#     connections will be terminated (flush).
+#   * flush global:
+#     when a host reaches the limit, then all its connections are
+#     terminated (flush).
+#
+# Credit: https://home.nuug.no/~peter/pf/en/bruteforce.html
 #
 # NOTE:
-# Over time, tables will be filled by overload rules and their size
-# will grow incrementally, taking up more memory.  Sometimes an IP
-# address that is blocked is a dynamically assigned one, which has
-# since been assigned to a host who has a legitimate reason to communicate
-# with hosts.  Therefore, the expired entries should get flushed,
-# e.g., this command will remove "bruteforce" table entries which
-# have not been referenced for 86400 seconds (i.e., 1 day):
-#     pfctl -t bruteforce -T expire 86400
-# It is convenient to add such clean command to root's cron table.
+# The "bruteforce" table needs periodic cleanups to remove the expired
+# entries (e.g., dynamically allocated IPs).  A good choice is to add
+# a cron task for root, e.g.,
+#     @hourly  pfctl -t bruteforce -T expire 86400
 #
-pass in on $ext_if proto tcp to ($ext_if) port $in_tcp_services_restricted \
+pass in on $ext_if proto tcp to ($ext_if) \
+     port $in_tcp_services_restricted \
      flags S/SA keep state \
-     (max-src-conn 8, max-src-conn-rate 4/30, \
+     (max-src-conn {{ pf.max_conn }}, \
+      max-src-conn-rate {{ pf.max_conn_rate }}, \
       overload <bruteforce> flush global)
 
 # Pass traffic for allowed non-restricted services

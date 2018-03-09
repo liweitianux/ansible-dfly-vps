@@ -16,6 +16,12 @@ network:
     address: 2001:19f0:5:3166::c0f:fee
     prefixlen: 64
 
+pf:
+  # number of simulataneous connections allowed from one host
+  max_conn: 100
+  # rate of new connections allowed from one host
+  max_conn_rate: 15/5  # 15 of connections per 5 seconds
+
 domains:
   - name: liwt.net
     # sub-domains for which to request certificates

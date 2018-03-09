@@ -5,6 +5,7 @@
     dest: /etc/pf.conf
     validate: "pfctl -nf %s"
   notify: reload-pf
+  tags: pf-rules
 
 - name: firewall - enable PF
   command: rcenable pf
