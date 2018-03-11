@@ -14,13 +14,12 @@
   command: rcenable pflog
 
 - name: sshlockout - setup with PF
-  blockinfile:
+  lineinfile:
     path: /etc/syslog.conf
-    marker: '# {mark} ANSIBLE MANAGED - sshlockout'
-    block: |
-      # Block SSH auth failures using "sshlockout" and "pf"
-      auth.info;authpriv.info	|exec /usr/sbin/sshlockout -pf bruteforce
+    line: "auth.info;authpriv.info	|exec /usr/sbin/sshlockout -pf bruteforce"
+    insertafter: 'auth\.info'
   notify: restart-syslogd
+  tags: sshlockout
 
 - name: periodic - copy clean-pf script
   copy:
