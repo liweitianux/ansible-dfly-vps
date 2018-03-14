@@ -120,7 +120,7 @@ znc:
   username: "{{ vault_znc_username }}"
   realname: "{{ vault_znc_realname }}"
   password: "{{ vault_znc_password }}"
-  port: 6697
+  port: 6697  # SSL/TLS
   # Buffer size for each channel/query playback
   buffer_size: 5000
   # Whether channel buffers are automatically cleared after playback
