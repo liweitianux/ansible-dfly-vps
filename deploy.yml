@@ -5,11 +5,17 @@
   become: true
 
   roles:
-    - basic
-    - security
-    - dns
-    - web
-    - mail
-    - shadowsocks
+    - role: basic
+      tags: basic
+    - role: security
+      tags: security
+    - role: dns
+      tags: dns
+    - role: web
+      tags: web
+    - role: mail
+      tags: mail
+    - role: shadowsocks
+      tags: shadowsocks
 
 # vim: set ft=yaml sw=2: #
