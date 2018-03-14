@@ -115,4 +115,27 @@ vpn:
   network4: 10.6.20.0
   port: 8080
 
+znc:
+  # Admin & client user, as well as IRC nickname
+  username: "{{ vault_znc_username }}"
+  realname: "{{ vault_znc_realname }}"
+  password: "{{ vault_znc_password }}"
+  port: 6697
+  # Buffer size for each channel/query playback
+  buffer_size: 5000
+  # Whether channel buffers are automatically cleared after playback
+  auto_clear_chan_buffer: "true"
+  # Quit message when disconnecting or shutting down
+  quit_msg: "see you"
+  # IRC networks
+  networks:
+    # EFNet: http://www.efnet.org/?module=servers
+    - name: efnet
+      server: efnet.port80.se
+      port: 6667
+      ssl: false
+      # Without the beginning '#'
+      channels:
+        - dragonflybsd
+
 # vim: set ft=yaml sw=2: #

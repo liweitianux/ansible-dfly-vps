@@ -17,5 +17,7 @@
       tags: mail
     - role: shadowsocks
       tags: shadowsocks
+    - role: znc
+      tags: znc
 
 # vim: set ft=yaml sw=2: #

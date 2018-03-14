@@ -1,0 +1,3 @@
+---
+- name: reload-znc
+  command: rcreload znc

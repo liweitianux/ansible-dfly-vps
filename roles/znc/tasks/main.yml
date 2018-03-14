@@ -1,0 +1,29 @@
+---
+- name: znc - install package
+  pkgng:
+    name: znc
+    state: present
+
+- name: znc - create config directory
+  file:
+    path: /usr/local/etc/znc/configs
+    state: directory
+
+- name: znc - generate config file
+  template:
+    src: znc.conf.j2
+    dest: /usr/local/etc/znc/configs/znc.conf
+    owner: znc
+    group: znc
+    mode: 0600
+    backup: yes
+  notify: reload-znc
+
+- name: znc - enable and start service
+  command: rcenable znc
+
+- name: acme - generate deployment script
+  template:
+    src: acme/znc.j2
+    dest: /usr/local/etc/acme/deploy.d/znc
+  tags: acme
