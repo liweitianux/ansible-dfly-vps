@@ -1,3 +1,4 @@
+# -*- mode: yaml; -*-
 ---
 # NOTE:
 # Ansible Best Practices - Variables and Vaults
@@ -6,5 +7,112 @@
 
 deploy_user: ansible
 ansible_ssh_private_key_file: ./private/ssh/ansible.key
+
+pf:
+  # number of simulataneous connections allowed from one host
+  max_conn: 100
+  # rate of new connections allowed from one host
+  max_conn_rate: 15/5  # 15 of connections per 5 seconds
+
+domains:
+  - name: liwt.net
+    # sub-domains for which to request certificates
+    sub:
+      - mail
+      - www
+      - git
+  - name: aaronly.me
+    sub:
+      - www
+  - name: 233233.xyz
+    sub:
+      - www
+      - g
+      - zw
+  - name: 1314233.xyz
+    sub:
+      - www
+
+dns:
+  ttl: 1h
+  refresh: 10800
+  retry: 1800
+  expire: 4w
+  minimum: 1d
+
+nameservers:
+  - name: afraid
+    xfr_ip: 174.37.196.55
+    ns:
+      - ns2.afraid.org
+  - name: 1984hosting
+    xfr_ip: 93.95.224.6
+    ns:
+      - ns0.1984.is
+      - ns1.1984.is
+      - ns2.1984.is
+
+mail:
+  domains:
+    - liwt.net  # primary
+    - aaronly.me
+  # user database, for both Postfix (receiving mails and transport to
+  # Dovecot) and Dovecot (auth users and deliver mails to disk)
+  userdb:
+    - name: root
+      aliases:
+        - postmaster
+        - hostmaster
+        - webmaster
+        - abuse
+    - name: aly
+      # for app/device-specific passwords
+      devices:
+        - laptop
+        - office
+        - phone
+        - tablet
+    - name: lulu
+    - name: wt
+      aliases:
+        - weitian
+      devices:
+        - laptop
+        - office
+        - phone
+        - tablet
+  # Virtual user for local mail delivery (e.g., by Dovecot)
+  vuser:
+    name: vmail  # user & group name
+    id: 5000  # uid & gid
+    home: /home/vmail
+  dkim:
+    selector: default
+    bits: 2048
+    port: 8901
+  dmarc:
+    p: none  # policy for the domain
+    sp: none  # policy for subdomains of this domain
+    aspf: r  # alignment mode for SPF (r: relaxed; s: strict)
+    pct: 100  # percent of messages subjected to filtering
+    # reporting URI of aggregate reports
+    # Free DMARC weekly digests by https://dmarc.postmarkapp.com/
+    rua:
+      liwt.net: re+yis1v8izxn0@dmarc.postmarkapp.com
+      aaronly.me: re+f6lpmirefcg@dmarc.postmarkapp.com
+  # To avoid trashing by GMail
+  google-site-verification:
+    liwt.net: n-dVRtkDeJ8k4BuSphkV-GVso0zJJWO-Z6GYoz6ayOQ
+    aaronly.me: rSh99lenrfS-HnzvEahEDYTj9UvoKeX4NdWmDzD-pxo
+
+shadowsocks:
+  port: 8989
+  password: "{{ vault_shadowsocks_password }}"
+  method: "chacha20-ietf-poly1305"
+
+vpn:
+  interface: tun0
+  network4: 10.6.20.0
+  port: 8080
 
 # vim: set ft=yaml sw=2: #
