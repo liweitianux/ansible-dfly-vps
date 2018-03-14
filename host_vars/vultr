@@ -115,7 +115,7 @@ mail:
 
 shadowsocks:
   port: 8989
-  password: "???"
+  password: "{{ vault_shadowsocks_password }}"
   method: "chacha20-ietf-poly1305"
 
 vpn:

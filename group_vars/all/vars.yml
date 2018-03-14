@@ -1,0 +1,10 @@
+---
+# NOTE:
+# Ansible Best Practices - Variables and Vaults
+# https://docs.ansible.com/ansible/latest/playbooks_best_practices.html#best-practices-for-variables-and-vaults
+
+
+deploy_user: ansible
+ansible_ssh_private_key_file: ./private/ssh/ansible.key
+
+# vim: set ft=yaml sw=2: #
