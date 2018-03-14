@@ -71,6 +71,13 @@
     mode: 0755
   with_fileglob:
     - "acme/*.sh"
+  tags: acme
+
+- name: acme - copy deployment scripts
+  copy:
+    src: acme/deploy.d/  # note the trailing '/'
+    dest: /usr/local/etc/acme/deploy.d/
+  tags: acme
 
 - name: (local) acme - check account private key existence
   become: false

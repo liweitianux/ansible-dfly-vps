@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# ACME deployment script
+#
+
+reload dovecot

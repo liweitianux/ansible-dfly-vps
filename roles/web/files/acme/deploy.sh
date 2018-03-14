@@ -1,22 +1,47 @@
 #!/bin/sh -e
 #
-# Restart the services after renewing the certificate(s) to deploy the
-# changed certificate(s).
-#
-# This script will be weekly executed.  See "/etc/periodic.conf".
+# Deploy the renewed certificate(s) to services.
 #
 # Aaron LI
 #
 
-# Services to be restarted after ACME certificate update
-SERVICES="nginx dovecot postfix"
-
-printf "-------------------------------------------------------------\n"
-for srv in ${SERVICES}; do
+reload() {
+    local srv="$1"
+    local rv=0
     if service ${srv} status >/dev/null 2>&1; then
-        echo "ACME deploy: restarting ${srv} ..."
-        service ${srv} restart
+        echo "Reloading service ${srv} ..."
+        service ${srv} reload
+        echo "ok"
     else
-        echo "ACME deploy: service ${srv} not running"
+        echo "WARNING: service ${srv} is not running" >&2
+        rv=1
+    fi
+    return ${rv}
+}
+
+
+restart() {
+    local srv="$1"
+    local rv=0
+    if service ${srv} status >/dev/null 2>&1; then
+        echo "Restarting service ${srv} ..."
+        service ${srv} restart
+        echo "ok"
+    else
+        echo "WARNING: service ${srv} is not running" >&2
+        rv=1
+    fi
+    return ${rv}
+}
+
+
+echo "============================================================="
+dir="${0%/*}"
+rv=0
+for f in ${dir}/deploy.d/*; do
+    if [ -f "${f}" ]; then
+        echo "Deploying [${f##*/}] ..."
+        . "${f}" || rv=$?
     fi
 done
+exit ${rv}

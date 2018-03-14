@@ -9,12 +9,16 @@
 #     $ ./acme-client.sh
 # which can be called by periodic(8).
 #
-# This script will be weekly executed in order to renew the certificate(s).
-# See "/etc/periodic.conf".
+# This script will be weekly executed in order to renew the certificate(s)
+# by adding such configurations to "/etc/periodic.conf":
+#     weekly_acme_client_enable="YES"
+#     weekly_acme_client_renewscript="/usr/local/etc/acme/acme-client.sh"
+#     weekly_acme_client_deployscript="/usr/local/etc/acme/deploy.sh"
 #
 # Output files:
-#   * .../etc/acme/privkey.pem : account private key
-#   * .../etc/ssl/acme/private/<domain>.pem : domain private key
+#   * etc/acme/privkey.pem : account private key
+#   * etc/ssl/acme/private/<domain>.pem : domain private key
+#   * etc/ssl/acme/<domain>/fullchain.pem : domain certificate
 #
 # XXX/TODO:
 #   * How to remove/revoke a SAN from the certificate?

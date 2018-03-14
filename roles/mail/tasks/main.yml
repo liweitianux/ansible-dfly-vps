@@ -189,3 +189,11 @@
 
 - name: postfix - start service
   command: rcstart postfix
+
+- name: acme - copy deployment scripts
+  copy:
+    src: "{{ item }}"
+    dest: /usr/local/etc/acme/deploy.d/{{ item | basename }}
+  with_fileglob:
+    - "acme/*"
+  tags: acme
