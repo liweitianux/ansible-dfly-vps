@@ -11,7 +11,7 @@ PLAYBOOK="${ROOTDIR}/bootstrap.yml"
 echo "Playbook directory: ${ROOTDIR}"
 echo "Playbook: ${PLAYBOOK}"
 
-SSHDIR="${ROOTDIR}/ssh"
+SSHDIR="${ROOTDIR}/private/ssh"
 SSHKEY="${SSHDIR}/ansible.key"
 if [ -f "${SSHKEY}" ]; then
     echo "ERROR: SSH key already exists: ${SSHKEY}"
