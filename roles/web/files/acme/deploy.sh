@@ -11,6 +11,7 @@
 # Services to be restarted after ACME certificate update
 SERVICES="nginx dovecot postfix"
 
+printf "-------------------------------------------------------------\n"
 for srv in ${SERVICES}; do
     if service ${srv} status >/dev/null 2>&1; then
         echo "ACME deploy: restarting ${srv} ..."

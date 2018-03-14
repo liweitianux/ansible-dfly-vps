@@ -114,4 +114,5 @@ grep -v '^\s*#' "${DOMAINSFILE}" | while read domain line; do
     [ $RC -ne 0 -a $RC -ne 2 ] && exit $RC
 done
 
+printf "-------------------------------------------------------------\n"
 exit 0
