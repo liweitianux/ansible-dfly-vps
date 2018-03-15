@@ -12,13 +12,7 @@
 // Also check http://en.znc.in/wiki/Configuration
 //
 
-{% set data_dir = "/usr/local/etc/znc" %}
-
 Version = 1.6.5
-AnonIPLimit = 10
-ConnectDelay = 5
-ProtectWebSessions = true
-ServerThrottle = 30
 HideVersion = true
 MaxBufferSize = {{ znc.buffer_size }}
 SSLProtocols = -SSLv2 -SSLv3 -TLSv1 +TLSv1.1 +TLSv1.2
@@ -27,20 +21,27 @@ SSLProtocols = -SSLv2 -SSLv3 -TLSv1 +TLSv1.1 +TLSv1.2
 // Everything in a single file, in the order from the most *private* to
 // the most *public* entries, except for the root certificate.
 // i.e., cat ssl.key ssl.cert dhparam.pem > znc.allinone.pem
-SSLCertFile = {{ data_dir }}/znc.allinone.pem
+SSLCertFile = {{ znc.data_dir }}/znc.allinone.pem
 
-//SSLCertFile = {{ data_dir }}/znc.ssl.crt
+//SSLCertFile = {{ znc.data_dir }}/znc.ssl.crt
 // version >=1.7
-//SSLKeyFile = {{ data_dir }}/znc.ssl.key
+//SSLKeyFile = {{ znc.data_dir }}/znc.ssl.key
 //SSLDHParamFile = /usr/local/etc/ssl/dhparam4096.pem
 
-<Listener listener0>
+<Listener ipv4>
     AllowIRC = true
     AllowWeb = false
     IPv4 = true
-    // NOTE: ZNC uses IPV6_V6ONLY to bind on IPv4+IPv6, however, it is
-    //       NOT supported on DragonFly BSD.
+    // NOTE: DFly doesn't allow IPV6_V6ONLY=0 to bind IPv4+IPv6
     IPv6 = false
+    Port = {{ znc.port }}
+    SSL = true
+</Listener>
+<Listener ipv6>
+    AllowIRC = true
+    AllowWeb = false
+    IPv4 = false
+    IPv6 = true
     Port = {{ znc.port }}
     SSL = true
 </Listener>
@@ -97,7 +98,7 @@ SSLCertFile = {{ data_dir }}/znc.allinone.pem
         {% endif %}
 
         {% for ch in net.channels -%}
-        <Chan #{{ ch }}>
+        <Chan #{{ ch | regex_replace('^#', '') }}>
         </Chan>
         {% endfor %}
 

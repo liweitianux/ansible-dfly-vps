@@ -7,11 +7,11 @@
 # ZNC supports SSLKeyFile and SSLDHParamFile since v1.7
 #
 #cp -v /usr/local/etc/ssl/acme/private/{{ network.domain }}.pem \
-#      /usr/local/etc/znc/znc.ssl.key
+#      {{ znc.data_dir }}/znc.ssl.key
 #cp -v /usr/local/etc/ssl/acme/{{ network.domain }}/fullchain.pem \
-#      /usr/local/etc/znc/znc.ssl.crt
-#chown znc:znc /usr/local/etc/znc/znc.ssl.key /usr/local/etc/znc/znc.ssl.crt
-#chmod 0400    /usr/local/etc/znc/znc.ssl.key /usr/local/etc/znc/znc.ssl.crt
+#      {{ znc.data_dir }}/znc.ssl.crt
+#chown znc:znc {{ znc.data_dir }}/znc.ssl.key {{ znc.data_dir }}/znc.ssl.crt
+#chmod 0400    {{ znc.data_dir }}/znc.ssl.key {{ znc.data_dir }}/znc.ssl.crt
 
 # SSL: https://wiki.znc.in/Signed_SSL_certificate
 # Everything in a single file, in the order from the most *private* to
@@ -21,8 +21,14 @@
 cat /usr/local/etc/ssl/acme/private/{{ network.domain }}.pem \
     /usr/local/etc/ssl/acme/{{ network.domain }}/fullchain.pem \
     /usr/local/etc/ssl/dhparam4096.pem \
-    > /usr/local/etc/znc/znc.allinone.pem
-chown znc:znc /usr/local/etc/znc/znc.allinone.pem
-chmod 0400    /usr/local/etc/znc/znc.allinone.pem
+    > {{ znc.data_dir }}/znc.allinone.pem
+chown znc:znc {{ znc.data_dir }}/znc.allinone.pem
+chmod 0400    {{ znc.data_dir }}/znc.allinone.pem
 
-reload znc
+if pgrep -x znc >/dev/null; then
+    echo "Reloading service znc: ..."
+    killall -SIGHUP znc
+    echo "ok"
+else
+    echo "WARNING: service znc is not running" >&2
+fi

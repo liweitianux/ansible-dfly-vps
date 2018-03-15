@@ -116,6 +116,7 @@ vpn:
   port: 8080
 
 znc:
+  data_dir: /home/znc
   # Admin & client user, as well as IRC nickname
   username: "{{ vault_znc_username }}"
   realname: "{{ vault_znc_realname }}"

@@ -1,3 +1,4 @@
 ---
 - name: reload-znc
-  command: rcreload znc
+  # NOTE: znc rc script doesn't support the reload command
+  command: killall -SIGHUP znc

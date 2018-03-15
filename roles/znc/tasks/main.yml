@@ -4,23 +4,34 @@
     name: znc
     state: present
 
-- name: znc - create config directory
+- name: znc - create data and config directory
   file:
-    path: /usr/local/etc/znc/configs
+    path: "{{ znc.data_dir }}/configs"
     state: directory
+    recurse: true
+    owner: znc
+    group: znc
+    mode: 0700
 
 - name: znc - generate config file
   template:
     src: znc.conf.j2
-    dest: /usr/local/etc/znc/configs/znc.conf
+    dest: "{{ znc.data_dir }}/configs/znc.conf"
     owner: znc
     group: znc
     mode: 0600
-    backup: yes
   notify: reload-znc
 
-- name: znc - enable and start service
-  command: rcenable znc
+- name: znc - enable service
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - znc"
+    block: |
+      znc_conf_dir="{{ znc.data_dir }}"
+      znc_enable="YES"
+
+- name: znc - start service
+  command: rcstart znc
 
 - name: acme - generate deployment script
   template:
