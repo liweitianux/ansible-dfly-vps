@@ -118,7 +118,7 @@ vpn:
 znc:
   data_dir: /home/znc
   # Admin & client user, as well as IRC nickname
-  username: "{{ vault_znc_username }}"
+  username: aly
   realname: "{{ vault_znc_realname }}"
   password: "{{ vault_znc_password }}"
   port: 6697  # SSL/TLS

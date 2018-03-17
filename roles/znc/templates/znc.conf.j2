@@ -34,8 +34,16 @@ SSLCertFile = {{ znc.data_dir }}/znc.allinone.pem
 <Listener {{ listener }}>
     AllowIRC = true
     AllowWeb = false
-    IPv4 = {% if listener == "ipv4" %}true{% else %}false{% endif %}
-    IPv6 = {% if listener == "ipv6" %}true{% else %}false{% endif %}
+    IPv4 = {% if listener == "ipv4" -%}
+        true
+    {% else -%}
+        false
+    {% endif -%}
+    IPv6 = {% if listener == "ipv6" -%}
+        true
+    {% else -%}
+        false
+    {% endif -%}
     Port = {{ znc.port }}
     SSL = true
 </Listener>
@@ -43,7 +51,7 @@ SSLCertFile = {{ znc.data_dir }}/znc.allinone.pem
 
 <User {{ znc.username }}>
     Admin = true
-    Pass = {{ znc.password }}
+    Pass = {{ znc.password | znc_makepass }}
     Nick = {{ znc.username }}
     AltNick = {{ znc.username }}_
     Ident = {{ znc.username }}
