@@ -92,10 +92,6 @@
     -exec sievec '{}' ';'
   tags: dovecot
 
-- name: dovecot - include passdb vars file
-  include_vars: "{{ playbook_dir }}/private/dovecot/passdb.yml"
-  tags: dovecot
-
 - name: dovecot - generate passdb and userdb
   template:
     src: dovecot/{{ item }}.j2

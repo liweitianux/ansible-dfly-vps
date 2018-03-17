@@ -65,22 +65,34 @@ mail:
         - hostmaster
         - webmaster
         - abuse
+      pass: "{{ vault_mail_userdb_root_pass }}"
     - name: aly
+      pass: "{{ vault_mail_userdb_aly_pass }}"
       # for app/device-specific passwords
       devices:
-        - laptop
-        - office
-        - phone
-        - tablet
+        - name: laptop
+          pass: "{{ vault_mail_userdb_aly_pass_laptop }}"
+        - name: office
+          pass: "{{ vault_mail_userdb_aly_pass_office }}"
+        - name: phone
+          pass: "{{ vault_mail_userdb_aly_pass_phone }}"
+        - name: tablet
+          pass: "{{ vault_mail_userdb_aly_pass_tablet }}"
     - name: lulu
+      pass: "{{ vault_mail_userdb_lulu_pass }}"
     - name: wt
       aliases:
         - weitian
+      pass: "{{ vault_mail_userdb_wt_pass }}"
       devices:
-        - laptop
-        - office
-        - phone
-        - tablet
+        - name: laptop
+          pass: "{{ vault_mail_userdb_wt_pass_laptop }}"
+        - name: office
+          pass: "{{ vault_mail_userdb_wt_pass_office }}"
+        - name: phone
+          pass: "{{ vault_mail_userdb_wt_pass_phone }}"
+        - name: tablet
+          pass: "{{ vault_mail_userdb_wt_pass_tablet }}"
   # Virtual user for local mail delivery (e.g., by Dovecot)
   vuser:
     name: vmail  # user & group name

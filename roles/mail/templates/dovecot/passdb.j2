@@ -21,23 +21,25 @@
 {% for domain in mail.domains %}
 # [domain: {{ domain }}]
 {% for user in mail.userdb %}
-{% set name = user.name %}
-{% set email = name + "@" + domain %}
-{% set pass = passdb[name].pass %}
-# (user: {{ name }})
-{{ email }}:{{ pass }}::::::user={{ email }}
+{% set username = user.name %}
+{% set email = username + "@" + domain %}
+{% set pass = user.pass %}
+# (user: {{ username }})
+{{ email }}:{{ pass | dovecot_makepass }}::::::user={{ email }}
 {% for dev in user.devices|default([]) %}
-{% set pass = passdb[name].devices[dev] %}
-{{ email }}@{{ dev }}:{{ pass }}::::::user={{ email }}
+{% set devname = dev.name %}
+{% set pass = dev.pass %}
+{{ email }}@{{ devname }}:{{ pass | dovecot_makepass }}::::::user={{ email }}
 {% endfor %}{# devices #}
-{% if name != "root" and user.aliases is defined %}
+{% if username != "root" and user.aliases is defined %}
 # aliases
 {% for alias in user.aliases|default([]) %}
 {% set email = alias + "@" + domain %}
-{{ email }}:{{ pass }}::::::user={{ email }}
+{{ email }}:{{ pass | dovecot_makepass }}::::::user={{ email }}
 {% for dev in user.devices|default([]) %}
-{% set pass = passdb[name].devices[dev] %}
-{{ email }}@{{ dev }}:{{ pass }}::::::user={{ email }}
+{% set devname = dev.name %}
+{% set pass = dev.pass %}
+{{ email }}@{{ devname }}:{{ pass | dovecot_makepass }}::::::user={{ email }}
 {% endfor %}{# devices #}
 {% endfor %}{# alias #}
 {% endif %}{# aliases #}
