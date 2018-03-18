@@ -92,10 +92,6 @@ if [ "${VERBOSE}" = "true" ]; then
     ARGS="${ARGS} -v"
 fi
 
-# HACK???
-[ ! -f "/etc/ssl/cert.pem" ] && \
-    ln -sv /usr/local/etc/ssl/cert.pem /etc/ssl/cert.pem
-
 [ ! -d "${CHALLENGEDIR}" ] && mkdir -pv ${CHALLENGEDIR}
 [ ! -d "${SSLDIR}/private" ] && mkdir -pvm700 "${SSLDIR}/private"
 
