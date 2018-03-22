@@ -103,15 +103,22 @@ mail:
     bits: 2048
     port: 8901
   dmarc:
-    p: none  # policy for the domain
-    sp: none  # policy for subdomains of this domain
-    aspf: r  # alignment mode for SPF (r: relaxed; s: strict)
-    pct: 100  # percent of messages subjected to filtering
-    # reporting URI of aggregate reports
+    p: none     # policy for the domain
+    sp: none    # policy for subdomains of this domain
+    pct: 100    # percent of messages subjected to filtering
+    adkim: r    # alignment mode for DKIM (r: relaxed; s: strict)
+    aspf: r     # alignment mode for SPF (r: relaxed; s: strict)
+    fo: 1       # Forensic options
+                # (0: DKIM & SPF fail; 1: DKIM / SPF fail;
+                #  d: DKIM fail; s: SPF fail)
+    # Aggregate reports URI email (required)
     # Free DMARC weekly digests by https://dmarc.postmarkapp.com/
     rua:
       liwt.net: re+yis1v8izxn0@dmarc.postmarkapp.com
       aaronly.me: re+f6lpmirefcg@dmarc.postmarkapp.com
+    # Forensic reports URI email (optional)
+    ruf:
+      liwt.net: abuse@liwt.net
   # To avoid trashing by GMail
   google-site-verification:
     liwt.net: n-dVRtkDeJ8k4BuSphkV-GVso0zJJWO-Z6GYoz6ayOQ

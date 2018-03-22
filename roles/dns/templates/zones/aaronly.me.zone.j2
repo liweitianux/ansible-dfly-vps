@@ -38,7 +38,14 @@ mail        IN  CNAME   mail.{{ network.domain }}.
 {% endif %}
 @           IN  TXT     "v=spf1 mx -all"
 @           IN  TXT     "google-site-verification={{ mail['google-site-verification'][domain] }}"
-_dmarc      IN  TXT     "v=DMARC1; p={{ mail.dmarc.p }}; sp={{ mail.dmarc.sp }}; pct={{ mail.dmarc.pct }}; aspf={{ mail.dmarc.aspf }}; rua=mailto:{{ mail.dmarc.rua[domain] }};"
+{% set ruatxt = "rua=mailto:" + mail.dmarc.rua[domain] + ";" %}
+{% set ruf = mail.dmarc.ruf | default({}) %}
+{% if ruf[domain] is defined %}
+{% set ruftxt = "ruf=mailto:" + ruf[domain] + ";" %}
+{% else %}
+{% set ruftxt = "" %}
+{% endif %}
+_dmarc      IN  TXT     "v=DMARC1; p={{ mail.dmarc.p }}; sp={{ mail.dmarc.sp }}; pct={{ mail.dmarc.pct }}; adkim={{ mail.dmarc.adkim }}; aspf={{ mail.dmarc.aspf }}; fo={{ mail.dmarc.fo }}; {{ ruatxt }} {{ ruftxt }}"
 {% if domain_key is defined %}
 {{ domain_key | dkim_record(selector=mail.dkim.selector) | join("\n") }}
 {% endif %}
