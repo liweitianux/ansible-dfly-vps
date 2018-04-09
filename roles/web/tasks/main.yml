@@ -85,6 +85,7 @@
     path: "{{ playbook_dir }}/private/acme/privkey.pem"
   delegate_to: localhost
   register: stat_result
+  tags: acme
 
 - name: (local) acme - generate account private key (4096 bit)
   become: false
@@ -93,28 +94,37 @@
     -out "{{ playbook_dir }}/private/acme/privkey.pem" 4096
   delegate_to: localhost
   when: not stat_result.stat.exists
+  tags: acme
 
 - name: acme - copy account private key
   copy:
     src: "{{ playbook_dir }}/private/acme/privkey.pem"
     dest: /usr/local/etc/acme/privkey.pem
     mode: 0400
+  tags: acme
 
 - name: acme - create domain private directory
   file:
     path: /usr/local/etc/ssl/acme/private/
     state: directory
     mode: 0700
+  tags: acme
 
 # Credit: https://shasawas.wordpress.com/2016/05/23/how-to-loop-over-a-set-of-tasks-in-ansible/
 - name: acme - generate and copy domain private keys
   include_tasks: acme-domainkey.yml domain={{ item.name }}
   with_items: "{{ domains }}"
+  tags:
+    - acme
+    - acme-renew
 
 - name: acme - generate domains.txt
   template:
     src: domains.txt.j2
     dest: /usr/local/etc/acme/domains.txt
+  tags:
+    - acme
+    - acme-renew
 
 - name: acme - create challenge directory
   file:
@@ -122,12 +132,20 @@
     state: directory
     group: www
     recurse: true
+  tags: acme
 
 - name: nginx - force reload
   command: rcreload nginx
+  tags:
+    - acme
+    - acme-renew
 
 - name: acme - request domain certificates
   command: sh /usr/local/etc/acme/acme-client.sh -e
+  notify: deploy-acme
+  tags:
+    - acme
+    - acme-renew
 
 - name: acme - setup periodic tasks for cert renewal
   blockinfile:
