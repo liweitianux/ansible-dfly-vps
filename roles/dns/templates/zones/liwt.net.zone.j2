@@ -34,7 +34,7 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-{% for name in ["vultr", "www", "git", "carddav", "caldav", "*"] %}
+{% for name in ["vultr", "www", "git", "dav", "*"] %}
 {{ name }}  IN  CNAME   @
 {% endfor %}
 

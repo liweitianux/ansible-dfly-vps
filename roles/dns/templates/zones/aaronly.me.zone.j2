@@ -24,12 +24,8 @@ $TTL        {{ dns.ttl }}
 dorm-x42    IN  A       58.196.142.84
 office      IN  A       202.120.52.45
 cluster     IN  A       202.120.52.63
-liteserver  IN  A       5.2.70.218
-liteserver  IN  AAAA    2a04:52c0:101:55a::218
 
-{% for name in ["www", "code", "g", "zw", "git", "carddav", "caldav"] %}
-{{ name }}  IN  CNAME   liteserver
-{% endfor %}
+*           IN  CNAME   @
 
 ; Mail server
 {% if domain != network.domain %}

@@ -1,7 +1,7 @@
 {% set domain = "liwt.net" %}
 #
 # nginx/sites: aaronly.radicale.conf
-# CalDAV/CardDAV server: caldav.{{ domain }}, carddav.{{ domain }}
+# CalDAV/CardDAV server: dav.{{ domain }}
 #
 # Aaron LI
 # 2017-04-27
@@ -11,7 +11,7 @@
 server {
     listen            443 ssl http2;
     listen       [::]:443 ssl http2;
-    server_name  caldav.{{ domain }}  carddav.{{ domain }};
+    server_name  dav.{{ domain }};
 
     # SSL/TLS Certificate kindly provided by Let's Encrypt
     ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
