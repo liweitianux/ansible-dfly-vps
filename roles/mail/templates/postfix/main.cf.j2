@@ -483,6 +483,24 @@ smtpd_sender_login_maps = pcre:$config_directory/login-maps.pcre
 
 
 ##
+## TLS settings
+##
+
+# List or bit-mask of OpenSSL options to enable.
+#
+# * NO_COMPRESSION : disable SSL compression even if supported by
+#                    the OpenSSL library.  Compression is CPU-intensive,
+#                    and compression before encryption does not always
+#                    improve security.
+tls_ssl_options = NO_COMPRESSION
+
+# Use the Postfix SMTP server's cipher preference order instead of the
+# remote client's cipher preference order.
+#
+tls_preempt_cipherlist = yes
+
+
+##
 ## SMTP server TLS settings
 ##
 
@@ -505,16 +523,6 @@ smtpd_tls_CAfile = /usr/local/etc/ssl/cert.pem
 #
 smtpd_tls_dh1024_param_file = /usr/local/etc/ssl/dhparam4096.pem
 
-# The minimum TLS cipher grade that the Postfix SMTP server will use
-# with opportunistic TLS encryption.
-# Do not use weak encryption ciphers.
-#
-smtpd_tls_ciphers = high
-
-# Enable EECDH key exchange for Forward Security
-#
-smtpd_tls_eecdh_grade = ultra
-
 # The SMTP TLS security level for the Postfix SMTP server.
 # Value "may" tells Postfix that it should use SSL/TLS if the remote
 # host supports it, i.e., opportunistic TLS.
@@ -523,6 +531,22 @@ smtpd_tls_eecdh_grade = ultra
 #
 smtpd_tls_security_level = may
 
+# The minimum TLS cipher grade that the Postfix SMTP server will use
+# with opportunistic/mandatory TLS encryption.
+#
+smtpd_tls_ciphers = high
+smtpd_tls_mandatory_ciphers = $smtpd_tls_ciphers
+
+# The SSL/TLS protocols accepted by the Postfix SMTP server with
+# opportunistic/mandatory TLS encryption.
+#
+smtpd_tls_protocols = !SSLv2, !SSLv3
+smtpd_tls_mandatory_protocols = $smtpd_tls_protocols
+
+# Enable EECDH key exchange for Forward Security
+#
+smtpd_tls_eecdh_grade = ultra
+
 # Enable additional Postfix SMTP server logging of TLS activity.
 #   1 : log only a summary message on TLS handshake completion;
 #       no logging of client certificate trust-chain verification
@@ -530,17 +554,6 @@ smtpd_tls_security_level = may
 # NOTE: do NOT use level 2 or higher except in case of problems.
 #
 smtpd_tls_loglevel = 1
-
-# The SSL/TLS protocols accepted by the Postfix SMTP server with
-# mandatory/opportunistic TLS encryption.
-#
-smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
-smtpd_tls_protocols = !SSLv2, !SSLv3
-
-# The minimum TLS cipher grade that the Postfix SMTP server will
-# use with mandatory TLS encryption.
-#
-smtpd_tls_mandatory_ciphers = high
 
 # Request that the Postfix SMTp server produces "Received:" message
 # headers that include information about the protocol and cipher
@@ -558,12 +571,44 @@ smtpd_tls_received_header = yes
 # access.  The file is created if it does not exist.
 #
 smtpd_tls_session_cache_database = btree:$data_directory/smtpd_scache
+
+
+##
+## SMTP client TLS settings
+##
+
+# The default SMTP TLS security level for the Postfix SMTP client.
+#   - may : opportunistic TLS.  Use TLS if this is supported by the
+#           remote SMTP server, otherwise use plaintext.
+#   - encrypt : mandatory TLS!
 #
-# The expiration time of Postfix SMTP server TLS session cache
-# information.  A cache cleanup is performed periodically every
-# such time.
+smtp_tls_security_level = may
+
+# The minimum TLS cipher grade that the Postfix SMTP client will use
+# with opportunistic/mandatory TLS encryption.
 #
-smtpd_tls_session_cache_timeout = 3600s
+smtp_tls_ciphers = high
+smtp_tls_mandatory_ciphers = $smtp_tls_ciphers
+
+# The SSL/TLS protocols accepted by the Postfix SMTP client with
+# opportunistic/mandatory TLS encryption.
+#
+smtp_tls_protocols = !SSLv2, !SSLv3
+smtp_tls_mandatory_protocols = $smtp_tls_protocols 
+
+# Enable additional Postfix SMTP client logging of TLS activity.
+#
+smtp_tls_loglevel = 1
+
+# Log the hostname of a remote SMTP server that offers STARTTLS, when
+# TLS is not already enabled for that server.
+#
+smtp_tls_note_starttls_offer = yes
+
+# Name of the file containing the optional Postfix SMTP client TLS
+# session cache.
+#
+smtp_tls_session_cache_database = btree:$data_directory/smtp_scache
 
 
 ##
@@ -658,53 +703,6 @@ disable_vrfy_command = yes
 # This stops mail from poorly written software (may reduce spams).
 #
 strict_rfc821_envelopes = yes
-
-# List or bit-mask of OpenSSL options to enable.
-#
-# * NO_COMPRESSION : disable SSL compression even if supported by
-#                    the OpenSSL library.  Compression is CPU-intensive,
-#                    and compression before encryption does not always
-#                    improve security.
-tls_ssl_options = NO_COMPRESSION
-
-# The OpenSSL cipherlist for "high" grade ciphers.
-#
-# WARNING: you are strongly encouraged to NOT change this settings.
-#
-tls_high_cipherlist = EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES12
-
-# Log the hostname of a remote SMTP server that offers STARTTLS, when
-# TLS is not already enabled for that server.
-#
-smtp_tls_note_starttls_offer = yes
-
-# The minimum TLS cipher grade that the Postfix SMTP client will use
-# with opportunistic TLS encryption.
-# Do not use weak encryption ciphers.
-#
-smtp_tls_ciphers = high
-
-# The default SMTP TLS security level for the Postfix SMTP client.
-#   - may : opportunistic TLS.  Use TLS if this is supported by the
-#           remote SMTP server, otherwise use plaintext.
-#   - encrypt : mandatory TLS!
-#
-smtp_tls_security_level = may
-
-# Enable additional Postfix SMTP client logging of TLS activity.
-#
-smtp_tls_loglevel = 1
-
-# The SSL/TLS protocols accepted by the Postfix SMTP client with
-# mandatory/opportunistic TLS encryption.
-#
-smtp_tls_mandatory_protocols = !SSLv2, !SSLv3
-smtp_tls_protocols = !SSLv2, !SSLv3
-
-# Name of the file containing the optional Postfix SMTP client TLS
-# session cache.
-#
-smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 
 
 ##
