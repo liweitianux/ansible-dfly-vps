@@ -1,0 +1,15 @@
+#
+# Password for Nginx auth for Radicale.
+#
+# Aaron LI
+#
+
+# name:pass
+{% for user in radicale.users %}
+# user: {{ user.name }}
+{{ user.name }}:{{ user.pass | cryptpass }}
+{% for dev in user.devices|default([]) %}
+{{ user.name }}@{{ dev.name }}:{{ dev.pass | cryptpass }}
+{% endfor %}{# devices #}
+{% endfor %}{# user #}
+# EOF

@@ -19,5 +19,7 @@
       tags: shadowsocks
     - role: znc
       tags: znc
+    - role: radicale
+      tags: radicale
 
 # vim: set ft=yaml sw=2: #

@@ -1,0 +1,65 @@
+---
+# NOTE: Radicale requires nginx.
+
+- name: install packages
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    # - py36-radicale2
+    - uwsgi-py36
+
+- name: create data directory
+  file:
+    path: "{{ radicale.home }}"
+    state: directory
+    owner: radicale
+    group: radicale
+    mode: 0700
+
+- name: generate config file
+  template:
+    src: config.j2
+    dest: "{{ radicale.etcdir }}/config"
+  notify: reload-radicale
+
+- name: copy extra config files
+  copy:
+    src: "{{ item }}"
+    dest: "{{ radicale.etcdir }}/{{ item | basename }}"
+  with_items:
+    - logging
+    - rights
+  notify: reload-radicale
+
+- name: copy gitignore for storage
+  copy:
+    src: _gitignore
+    dest: "{{ radicale.home }}/.gitignore"
+
+- name: create nginx auth/ dirctory
+  file:
+    path: /usr/local/etc/nginx/auth
+    state: directory
+
+- name: generate passwd for nginx
+  template:
+    src: radicale.passwd.j2
+    dest: /usr/local/etc/nginx/auth/radicale.passwd
+    group: www
+    mode: 0440
+  notify: reload-nginx
+
+- name: setup uwsgi in rc.conf
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - uwsgi/radicale"
+    block: |
+      uwsgi_profiles="${uwsgi_profiles} radicale"
+      uwsgi_radicale_socket="/var/run/uwsgi-radicale.sock"
+      uwsgi_radicale_uid="radicale"
+      uwsgi_radicale_gid="radicale"
+      uwsgi_radicale_flags="-L --env RADICALE_CONFIG={{ radicale.etcdir }}/config --plugin python --wsgi-file {{ radicale.wwwdir }}/radicale.wsgi"
+
+- name: enable and start uwsgi
+  command: rcenable uwsgi

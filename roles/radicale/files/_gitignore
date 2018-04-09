@@ -1,0 +1,5 @@
+# http://radicale.org/versioning/
+
+.Radicale.cache
+.Radicale.lock
+.Radicale.tmp-*

@@ -1,0 +1,90 @@
+#
+# /usr/local/etc/radicale/config
+# Radicale - A simple calendar and contact server
+#
+# http://radicale.org/
+# https://github.com/Kozea/Radicale
+#
+# Aaron LI
+# Created: 2017-04-27
+#
+
+
+# Not needed when using uWSGI
+[server]
+hosts = 127.0.0.1:5232
+daemon = True
+
+[auth]
+
+# Authentication method
+# Value: none | htpasswd | remote_user | http_x_remote_user
+#
+# * None
+#   Allows all usernames and passwords.  It also disables rights checking.
+# * htpasswd
+#   Use an Apache htpasswd file to store usernames and passwords.
+# * remote_user
+#   Takes the user name from the REMOTE_USER environment variable and
+#   disables HTTP authentication.  This can be used to provide the user
+#   name from a WSGI server.
+# * http_x_remote_user
+#   Takes the user name from the "X-Remote-User" HTTP header and disables
+#   HTTP authentication.  This can be used to provide the user name from
+#   a reverse proxy. 
+#
+#type = http_x_remote_user
+type = remote_user
+
+
+# Rights backend
+[rights]
+
+# Value: none | authenticated | owner_only | owner_write | from_file
+#
+# * None          : Everybody (including anonymous users) has read and
+#                   write access to all collections;
+# * authenticated : An authenticated users has read and write access
+#                   to all collections, anonymous users have no access
+#                   to these collections;
+# * owner_only    : Only owners have read and write access to their
+#                   own collections. The other users, authenticated or
+#                   anonymous, have no access to these collections;
+# * owner_write   : Authenticated users have read access to all collections,
+#                   but only owners have write access to their own
+#                   collections.  And anonymous users have no access;
+# * from_file     : Rights are based on a regex-based file whose name
+#                   is specified in this config file: [right]/file
+#
+type = owner_only
+
+
+# Storage backend
+[storage]
+
+type = multifilesystem
+filesystem_folder = {{ radicale.home }}
+
+# Command that is run after changes to storage
+# See: http://radicale.org/versioning/
+hook = ([ -d .git ] || git init) && git add -A && (git diff --cached --quiet || git commit -m "Changes by "%(user)s)
+
+
+# Web interface backend
+[web]
+
+# Value: none | internal
+#
+# * none : Just shows the message "Radicale works!".
+# * internal : Allows creation and management of address books and calendars.
+#
+#type = internal
+type = none
+
+
+[logging]
+config = {{ radicale.etcdir }}/logging
+# The logging config file just specified will provide finer controls, so
+# just set the default logging level to DEBUG.
+debug = True
+

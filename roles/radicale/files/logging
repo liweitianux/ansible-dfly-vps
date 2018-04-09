@@ -1,0 +1,50 @@
+#
+# /usr/local/etc/radicale/logging
+# Logging configurations for Radicale
+#
+# References
+# * http://radicale.org/logging/
+# * https://docs.python.org/3/library/logging.config.html
+#
+# Aaron LI
+# Created: 2017-04-27
+#
+
+
+# NOTE: uWSGI will capture the console output, so no longer need to
+#       log into a separate file.
+
+[loggers]
+keys = root
+
+[handlers]
+keys = console
+
+[formatters]
+keys = full
+
+#
+# Loggers
+#
+
+[logger_root]
+handlers = console
+
+#
+# Handlers
+#
+
+[handler_console]
+class = StreamHandler
+level = INFO
+#level = DEBUG
+args = (sys.stdout,)
+formatter = full
+
+#
+# Formatters
+#
+
+[formatter_full]
+format = %(asctime)s - %(levelname)s: %(message)s
+datefmt = %b %d %H:%M:%S

@@ -21,6 +21,7 @@ domains:
       - mail
       - www
       - git
+      - dav
   - name: aaronly.me
     sub:
       - www
@@ -157,5 +158,29 @@ znc:
       # Without the beginning '#'
       channels:
         - dragonflybsd
+
+radicale:
+  home: /home/radicale
+  etcdir: /usr/local/etc/radicale2
+  wwwdir: /usr/local/www/radicale2
+  users:
+    - name: aly
+      pass: "{{ vault_radicale_users_aly_pass }}"
+      devices:
+        - name: laptop
+          pass: "{{ vault_radicale_users_aly_pass_laptop }}"
+        - name: office
+          pass: "{{ vault_radicale_users_aly_pass_office }}"
+        - name: phone
+          pass: "{{ vault_radicale_users_aly_pass_phone }}"
+        - name: tablet
+          pass: "{{ vault_radicale_users_aly_pass_tablet }}"
+    - name: lulu
+      pass: "{{ vault_radicale_users_lulu_pass }}"
+      devices:
+        - name: phone
+          pass: "{{ vault_radicale_users_lulu_pass_phone }}"
+        - name: tablet
+          pass: "{{ vault_radicale_users_lulu_pass_tablet }}"
 
 # vim: set ft=yaml sw=2: #

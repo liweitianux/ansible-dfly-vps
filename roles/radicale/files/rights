@@ -1,0 +1,49 @@
+#
+# /usr/local/etc/radicale/rights
+# File-based rights managements for Radicale
+#
+# Aaron LI
+# Created: 2017-04-27
+#
+
+# Authentication login is matched against the "user" key, and collection's
+# path is matched against the "collection" key.
+# You can use Python's ConfigParser interpolation values "%(login)s" and
+# "%(path)s".  You can also get groups from the user regex in the collection
+# with "{0}", "{1}", etc.
+#
+# For example, for the "user" key, ".+" means "authenticated user" and ".*"
+# means "anybody" (including anonymous users).
+#
+# * Section names are only used for naming the rule.
+# * Leading or ending slashes are trimmed from collection's path.
+# * The first rule matching both user and collection patterns will be returned.
+#
+# See: http://radicale.org/user_documentation/#idrights-management
+#
+
+# Use a domain-like authentication (user@device) for each owner/user
+# to achieve the application-specific passwords mechanism.
+[owner-devices]
+user: ([^@]+)@.+
+collection: {0}(/.*)?
+permission: rw
+
+# I use the authentication through IMAP provided by Dovecot, and I
+# implement the application-specific passwords mechanism, i.e., one
+# user may have different passwords for different devices/logins
+# identified with different username.
+# For example, a user "user@domain.com" may set different passwords
+# for such different usernames, e.g., "user@domain.com@laptop",
+# "user@domain.com@phone".
+#
+#[owner-imap-auth]
+#user: ^([^@]+)@.+\..+$
+#collection: ^{0}(/.+)?$
+#permission: rw
+
+# Any authenticated user can reach root collection
+#[read]
+#user = .+
+#collection =
+#permission = r
