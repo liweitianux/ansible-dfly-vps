@@ -24,3 +24,4 @@
   # NOTE: `with_fileglob` always operates from `files/`
   with_fileglob:
     - "../templates/sites/*.j2"
+  notify: reload-nginx
