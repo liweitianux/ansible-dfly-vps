@@ -17,6 +17,28 @@
     group: radicale
     mode: 0700
 
+- name: initialize git repo
+  become_user: radicale
+  command: git init
+  args:
+    chdir: "{{ radicale.home }}"
+    creates: "{{ radicale.home }}/.git"
+  when: radicale.git
+
+- name: config git user name
+  become_user: radicale
+  command: git config user.name Radicale
+  args:
+    chdir: "{{ radicale.home }}"
+  when: radicale.git
+
+- name: config git user email
+  become_user: radicale
+  command: git config user.email radicale@localhost
+  args:
+    chdir: "{{ radicale.home }}"
+  when: radicale.git
+
 - name: generate config file
   template:
     src: config.j2
