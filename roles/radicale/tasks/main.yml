@@ -59,7 +59,7 @@
       uwsgi_radicale_socket="/var/run/uwsgi-radicale.sock"
       uwsgi_radicale_uid="radicale"
       uwsgi_radicale_gid="radicale"
-      uwsgi_radicale_flags="-L --env RADICALE_CONFIG={{ radicale.etcdir }}/config --plugin python --wsgi-file {{ radicale.wwwdir }}/radicale.wsgi"
+      uwsgi_radicale_flags="-L --log-reopen --logfile-chown --wsgi-file {{ radicale.wwwdir }}/radicale.wsgi --env RADICALE_CONFIG={{ radicale.etcdir }}/config"
 
 - name: enable and start uwsgi
   command: rcenable uwsgi
@@ -68,4 +68,4 @@
   lineinfile:
     path: /etc/newsyslog.conf
     regexp: '/var/log/uwsgi-radicale.log'
-    line: "/var/log/uwsgi-radicale.log		640  7	   *	@T00  Z    /var/run/uwsgi-radicale.pid"
+    line: "/var/log/uwsgi-radicale.log	radicale:radicale	640  7	   *	@T00  Z    /var/run/uwsgi-radicale.pid"
