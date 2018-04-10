@@ -19,32 +19,18 @@ server {
 
     # Reverse proxy to Radicale
     location / {
-        # Auth through HTTP
-        auth_basic            "Radicale ...";
+        auth_basic            "Radicale requires auth ...";
         auth_basic_user_file  /usr/local/etc/nginx/auth/radicale.passwd;
 
-        # XXX: Hack to support "username@domain"-style logins
+        # XXX: Hack to support "username[@domain]"-style login names
+        # (NOTE: the "@domain" part is optional, so $username is always set)
         if ($remote_user ~ ^(?<user_>[^@/]+)(@[^/]+)?$) {
             set  $username  $user_;
         }
 
-        # When a reverse proxy is used, the path at which Radicale is
-        # available must be provided via the "X-Script-Name" header.
-        # The proxy must remove the location from the URL path that is
-        # forwarded to Radicale.
-        # http://radicale.org/proxy/
-        #
-        #proxy_pass        http://127.0.0.1:5232/;  # Note the trailing "/"
-        #proxy_set_header  Host               $host;
-        #proxy_set_header  X-Real-IP          $remote_addr;
-        #proxy_set_header  X-Forwarded-For    $proxy_add_x_forwarded_for;
-        #proxy_set_header  X-Forwarded-Proto  $scheme;
-        #proxy_set_header  X-Remote-User      $username;
-
         # WSGI interface: http://radicale.org/wsgi/
         include      uwsgi_params;
-        # Require to set 'auth/type' to 'remote_user' in config file
-        uwsgi_param  REMOTE_USER      $username;
+        uwsgi_param  REMOTE_USER  $username;
         uwsgi_pass   unix:/tmp/uwsgi-radicale.sock;
     }
 }
