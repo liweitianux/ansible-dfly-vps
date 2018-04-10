@@ -163,6 +163,8 @@ radicale:
   home: /home/radicale
   etcdir: /usr/local/etc/radicale2
   wwwdir: /usr/local/www/radicale2
+  # Enable versioning with git
+  git: true
   users:
     - name: aly
       pass: "{{ vault_radicale_users_aly_pass }}"
