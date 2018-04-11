@@ -1,6 +1,6 @@
 {% set domain = "liwt.net" %}
 #
-# nginx/sites: liwt.git.conf
+# nginx/sites: liwt.cgit.conf
 # Website: git.{{ domain }}
 # Share/publish projects (git repositories) using `cgit`.
 #
@@ -28,7 +28,6 @@ server {
     try_files    $uri @cgit;
 
     location @cgit {
-        # Require `www/uwsgi` package and configurations in `/etc/rc.conf`.
         include          uwsgi_params;
         # modifier1: 9 - size of CGI block vars (HTTP request body excluded)
         uwsgi_modifier1  9;
