@@ -33,6 +33,18 @@
     state: touch
     mode: 0600
 
+- name: periodic - touch config file
+  file:
+    path: /etc/periodic.conf
+    state: touch
+    mode: 0644
+
+- name: periodic - inline daily security status
+  lineinfile:
+    path: /etc/periodic.conf
+    regexp: '^#?\s*daily_status_security_inline'
+    line: "daily_status_security_inline=YES"
+
 - name: csh - install /etc/csh.cshrc
   copy:
     src: csh.cshrc

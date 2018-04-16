@@ -27,12 +27,6 @@
     dest: /etc/periodic/daily/600.clean-pf
     mode: 0755
 
-- name: periodic - touch config file
-  file:
-    path: /etc/periodic.conf
-    state: touch
-    mode: 0644
-
 - name: periodic - enable clean-pf
   blockinfile:
     path: /etc/periodic.conf
