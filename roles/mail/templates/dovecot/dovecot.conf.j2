@@ -312,15 +312,7 @@ ssl_cert = </usr/local/etc/ssl/acme/{{ mydomain }}/fullchain.pem
 ssl_key = </usr/local/etc/ssl/acme/private/{{ mydomain }}.pem
 
 # DH parameters file.
-#ssl_dh = </usr/local/etc/ssl/dhparam4096.pem
-
-# DH parameters length to use. (version == 2.2)
-#
-# NOTE: to re-generate DH-parameters, first manually delete current
-#       parameters: "/var/db/dovecot/ssl-parameters.dat", and then
-#       restart Dovecot.
-#
-ssl_dh_parameters_length = 2048
+ssl_dh = </usr/local/etc/ssl/dhparam4096.pem
 
 # PEM encoded trusted certificate authority.
 # Set this only if you intend to use "ssl_verify_client_cert=yes".
@@ -337,11 +329,8 @@ ssl_dh_parameters_length = 2048
 # "auth_ssl_username_from_cert=yes".
 #ssl_cert_username_field = commonName
 
-# SSL protocols to use: disable SSL, use TLS only!
-ssl_protocols = !SSLv3 !SSLv2
-
-# SSL ciphers to use
-ssl_cipher_list = EDH+CAMELLIA:EDH+aRSA:EECDH+aRSA+AESGCM:EECDH+aRSA+SHA256:EECDH:+CAMELLIA128:+AES128:+SSLv3:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!DSS:!RC4:!SEED:!IDEA:!ECDSA:kEDH:CAMELLIA128-SHA:AES12
+# Minimal SSL protocol version to accept
+ssl_min_protocol = TLSv1.1
 
 # Prefer the server's order of ciphers over client's.
 ssl_prefer_server_ciphers = yes
