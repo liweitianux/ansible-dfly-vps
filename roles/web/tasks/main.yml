@@ -10,7 +10,7 @@
 - name: (local) ssl/tls - check dhparam existence
   become: false
   stat:
-    path: "{{ playbook_dir }}/ssl/dhparam4096.pem"
+    path: "{{ playbook_dir }}/private/ssl/dhparam4096.pem"
   delegate_to: localhost
   register: stat_result
 
@@ -18,13 +18,13 @@
   become: false
   command: >
     openssl dhparam
-    -out "{{ playbook_dir }}/ssl/dhparam4096.pem" 4096
+    -out "{{ playbook_dir }}/private/ssl/dhparam4096.pem" 4096
   delegate_to: localhost
   when: not stat_result.stat.exists
 
 - name: ssl/tls - copy dhparam
   copy:
-    src: "{{ playbook_dir }}/ssl/dhparam4096.pem"
+    src: "{{ playbook_dir }}/private/ssl/dhparam4096.pem"
     dest: /usr/local/etc/ssl/dhparam4096.pem
     mode: 0444
 
