@@ -7,6 +7,7 @@
     - git
     - cgit
     - uwsgi-py36
+    - highlight
 
 - name: check user group existence
   command: pw groupshow {{ git.user.name }}
@@ -117,6 +118,12 @@
     src: cgit/cgitrc.j2
     dest: "{{ git.cgit.root }}/cgitrc"
   notify: restart-cgit
+
+- name: cgit - copy scripts
+  copy:
+    src: cgit/syntax-highlighting.sh
+    dest: "{{ git.cgit.root }}/syntax-highlighting.sh"
+    mode: 0755
 
 - name: cgit - create static repo
   become_user: "{{ git.user.name }}"
