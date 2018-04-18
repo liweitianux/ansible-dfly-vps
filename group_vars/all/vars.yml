@@ -185,4 +185,29 @@ radicale:
         - name: tablet
           pass: "{{ vault_radicale_users_lulu_pass_tablet }}"
 
+git:
+  user:
+    name: git  # user & group name
+    id: 5001  # uid & gid
+    home: /home/git
+    shell: /usr/local/libexec/git-core/git-shell
+    ssh_keydir: "{{ playbook_dir }}/private/git/keys"
+  # Name of the directory that contains links to the public repos
+  public_dir: repos.public
+  # Sync public repos to GitHub
+  # NOTE: an unencrypted ssh keypair is required and been added to GitHub
+  github:
+    sync: true
+    user: liweitianux
+    api: "https://api.github.com"
+    url: "git@github.com"
+    keyname: "github.key"
+    keytype: ed25519
+  # Export public repositories
+  cgit:
+    # Root of cgit files (config, filters, static, etc.)
+    root: /home/www/cgit
+    # Name of the git repo from which to checkout the static resources
+    static_repo: cgit-static.git
+
 # vim: set ft=yaml sw=2: #

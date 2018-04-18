@@ -1,0 +1,151 @@
+---
+- name: install packages
+  pkgng:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - git
+    - cgit
+    - uwsgi-py36
+
+- name: check user group existence
+  command: pw groupshow {{ git.user.name }}
+  register: pw_cmd
+  ignore_errors: true
+  changed_when: false
+
+- name: create user group
+  command: pw groupadd {{ git.user.name }} -g {{ git.user.id }}
+  when: pw_cmd.rc != 0
+
+- name: check user existence
+  command: pw usershow {{ git.user.name }}
+  register: pw_cmd
+  ignore_errors: true
+  changed_when: false
+
+- name: create user
+  command: >
+    pw useradd {{ git.user.name }}
+    -u {{ git.user.id }} -g {{ git.user.name }}
+    -d {{ git.user.home }} -m -M 0700
+    -s {{ git.user.shell }}
+    -c "Git Repositories Owner"
+  when: pw_cmd.rc != 0
+
+- name: add ssh keys
+  authorized_key:
+    user: "{{ git.user.name }}"
+    state: present
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - "{{ git.user.ssh_keydir }}/*.pub"
+
+- name: generate vars.conf file
+  template:
+    src: vars.conf.j2
+    dest: "{{ git.user.home }}/vars.conf"
+
+- name: copy git-shell commands
+  copy:
+    src: git-shell-commands/  # trailing '/' -> directory contents
+    dest: "{{ git.user.home }}/git-shell-commands/"
+
+- name: add execution permission to git-shell commands
+  file:
+    path: "{{ git.user.home }}/git-shell-commands"
+    mode: 0755
+    recurse: true
+
+- name: (local) github sync - check ssh key existence
+  become: false
+  stat:
+    path: "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+  delegate_to: localhost
+  register: stat_result
+
+- name: (local) github sync - generate new ssh key pair
+  become: false
+  command: >
+    ssh-keygen -t ed25519 -C "git:github-sync" -N ""
+    -f "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+
+- name: github sync - create .ssh directory on the server
+  file:
+    path: "{{ git.user.home }}/.ssh"
+    state: directory
+    owner: "{{ git.user.name }}"
+    group: "{{ git.user.name }}"
+    mode: 0700
+
+- name: github sync - copy public key to the server
+  copy:
+    src: "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+    dest: "{{ git.user.home }}/.ssh/id_{{ git.github.keytype }}"
+    owner: "{{ git.user.name }}"
+    mode: 0400
+
+- name: create directory for linking public repos
+  file:
+    path: "{{ git.user.home }}/{{ git.public_dir }}"
+    state: directory
+    owner: "{{ git.user.name }}"
+    group: "{{ git.user.name }}"
+
+#
+# cgit
+#
+
+- name: cgit - create root directory
+  file:
+    path: "{{ git.cgit.root }}"
+    state: directory
+
+- name: cgit - create static directory (allow git checkout)
+  file:
+    path: "{{ git.cgit.root }}/static"
+    state: directory
+    owner: "{{ git.user.name }}"
+    group: "{{ git.user.name }}"
+
+- name: cgit - generate config file
+  template:
+    src: cgit/cgitrc.j2
+    dest: "{{ git.cgit.root }}/cgitrc"
+  notify: restart-cgit
+
+- name: cgit - create static repo
+  become_user: "{{ git.user.name }}"
+  command: >
+    ./git-shell-commands/create
+    {{ git.cgit.static_repo }}
+    "cgit static resources repo"
+  args:
+    chdir: "{{ git.user.home }}"
+    creates: "{{ git.user.home }}/{{ git.cgit.static_repo }}"
+
+- name: cgit - add post-receive hook to the static repo
+  template:
+    src: cgit/post-receive.j2
+    dest: "{{ git.user.home }}/{{ git.cgit.static_repo }}/hooks/post-receive"
+    owner: "{{ git.user.name }}"
+    mode: 0755
+
+- name: cgit - setup with uwsgi in rc.conf
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - uwsgi/cgit"
+    block: |
+      uwsgi_profiles="${uwsgi_profiles} cgit"
+      uwsgi_cgit_uid="git"
+      uwsgi_cgit_gid="git"
+      uwsgi_cgit_flags="-L --log-reopen --logfile-chown --cgi /usr/local/www/cgit/cgit.cgi --env CGIT_CONFIG={{ git.cgit.root }}/cgitrc"
+  notify: restart-cgit
+
+- name: enable and start uwsgi
+  command: rcenable uwsgi
+
+- name: start cgit
+  command: service uwsgi start cgit

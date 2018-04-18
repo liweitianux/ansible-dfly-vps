@@ -85,6 +85,9 @@
 - name: enable and start uwsgi
   command: rcenable uwsgi
 
+- name: start radicale
+  command: service uwsgi start radicale
+
 - name: newsyslog - uwsgi/radicale log rotation
   lineinfile:
     path: /etc/newsyslog.conf

@@ -13,7 +13,7 @@
 # 2017-06-18
 #
 
-{% if cgit is defined and domains_hascert[domain] %}
+{% if git.cgit is defined and domains_hascert[domain] %}
 server {
     listen            443 ssl http2;
     listen       [::]:443 ssl http2;
@@ -31,11 +31,11 @@ server {
         include          uwsgi_params;
         # modifier1: 9 - size of CGI block vars (HTTP request body excluded)
         uwsgi_modifier1  9;
-        uwsgi_pass       unix:/var/run/uwsgi-cgit.sock;
+        uwsgi_pass       unix:/tmp/uwsgi-cgit.sock;
     }
 
     location /static/ {
-        root  /home/www/git/;
+        root  {{ git.cgit.root }};
     }
 
     error_page  500 502 503 504 /50x.html;

@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# ~/git-shell-commands/set-desc
+#
+# Set the description of an existing Git repository.
+#
+# Aaron LI
+# 2017-08-22
+#
+
+if [ $# -lt 2 ]; then
+    echo "Usage: set-desc <project.git> <description>"
+    exit 1
+fi
+
+# Set the project name, adding `.git` extension if missing
+project="${1%.[gG][iI][tT]}.git"
+shift
+
+if [ ! -d "${HOME}/${project}" ]; then
+    echo "ERROR: repository '${project}' not exists!"
+    exit 2
+fi
+
+description="$@"
+if [ -n "${description}" ]; then
+    echo "${description}" > ${HOME}/${project}/description
+fi
+
+echo "Set description of Git repository: ${project}"
+echo "Description: $(cat ${HOME}/${project}/description)"

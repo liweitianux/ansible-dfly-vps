@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# Copyright (c) 2017 Aaron LI <aly@aaronly.me>
+# MIT License
+#
+# Sync public repositories to GitHub.
+#
+# 2017-06-25
+#
+
+. ${HOME}/vars.conf
+
+# Return 0 if the GitHub repository exists
+has_github_repo() {
+    local repo url
+    repo=$(basename $1)
+    repo="${repo%.git}"
+    url="${GITHUB_API}/repos/${GITHUB_USER}/${repo}"
+    echo "Check existence on GitHub: ${url}"
+    curl -s ${url} | grep -q '"owner"'
+}
+
+
+# Add the "github" remote if not exists
+add_remote_github() {
+    local gitdir_ repo url ret
+    gitdir_="$1"
+    url=$(git --git-dir="${gitdir_}" remote get-url github 2>&1)
+    ret=$?
+    if [ ${ret} -eq 0 ]; then
+        # Already has the "github" remote
+        echo "Remote 'github': ${url}"
+    else
+        repo=$(basename ${gitdir_})
+        url="${GITHUB_URL}:${GITHUB_USER}/${repo}"
+        git --git-dir="${gitdir_}" remote add github ${url}
+        echo "Added remote 'github': ${url}"
+        git --git-dir="${gitdir_}" remote update github
+    fi
+}
+
+
+# Check whether the repository needs push to remote "github";
+# Return 0 if needs push.
+#
+# Credit:
+# * Check if pull needed in Git
+#   https://stackoverflow.com/a/3278427/4856091
+# * List Git commits not pushed to the origin yet
+#   https://stackoverflow.com/a/3080554/4856091
+#
+need_push_github() {
+    local gitdir_ unpushed
+    gitdir_="$1"
+    unpushed=$(git --git-dir="${gitdir_}" \
+                   log --oneline github/master..master | wc -l)
+    if [ ${unpushed} -eq 0 ]; then
+        echo "Already up-to-date" && false
+    else
+        echo "${unpushed} commits need push" && true
+    fi
+}
+
+
+if [ $# -eq 0 ]; then
+    cat <<_EOF_
+usage:
+    sync-github <repo.git> ...
+    sync-github @<repo_dir>
+
+e.g.,
+    sync-github @${PUBLIC}
+_EOF_
+    exit 1
+fi
+
+
+if [ "$(echo $1 | cut -c1)" = "@" ]; then
+    REPO_DIR="${1#@}"
+    REPOS=$(ls -d ${REPO_DIR}/*.git)
+else
+    REPOS="$@"
+fi
+
+echo "=== Selected Repositories ==="
+for repo in ${REPOS}; do
+    repo2="${repo%.[gG][iI][tT]}.git"
+    echo "* ${repo2}"
+done
+
+for repo in ${REPOS}; do
+    repo2="${repo%.[gG][iI][tT]}.git"
+    echo "=== Sync Repository: ${repo2} ==="
+    if ! has_github_repo ${repo2}; then
+        echo "WARNING: no such repo on GitHub: ${repo2}"
+        continue
+    fi
+    add_remote_github ${repo2}
+    if need_push_github ${repo2}; then
+        echo "Push commits to GitHub ..."
+        git --git-dir="${repo2}" push --mirror github
+    fi
+done

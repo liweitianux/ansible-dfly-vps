@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# ~/git-shell-commands/no-interactive-login
+#
+# Disable interactive logins, displaying a greeting instead.
+# See git-shell(1)
+#
+# Remove/rename this script to allow interactive logins, e.g.,
+# allow `su - git` to add SSH keys.
+#
+#
+# Aaron LI
+# 2017-06-18
+#
+
+cat <<_EOF_
+Hi ${USER}!
+You've successfully authenticated, but interactive shell
+access is not provided.
+Bye~
+_EOF_
+
+exit 128

@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# ~/git-shell-commands/create
+#
+# An interactive command to create a new repository.  The `.git` extension
+# is automatically added if missing, in order to let `list` command find
+# this repository.
+#
+# Credit:
+# * Hosting an admin-friendly git server with git-shell
+#   http://planzero.org/blog/2012/10/24/hosting_an_admin-friendly_git_server_with_git-shell
+#
+# Aaron LI
+# 2017-06-18
+#
+
+if [ $# -eq 0 ]; then
+    echo "Usage: create <project.git> [ description ]"
+    exit 1
+fi
+
+# Set the project name, adding `.git` extension if missing
+project="${1%.[gG][iI][tT]}.git"
+shift
+
+if [ -d "${HOME}/${project}" ]; then
+    echo "ERROR: repository '${project}' already exists!"
+    exit 2
+fi
+
+# Create and initialise the project
+mkdir "${HOME}/${project}" && \
+    cd "${HOME}/${project}" && \
+    git --bare init
+
+description="$@"
+if [ -n "${description}" ]; then
+    echo "${description}" > ${HOME}/${project}/description
+fi
+
+echo "Created Git repository: ${project}"
+echo "Description: $(cat ${HOME}/${project}/description)"

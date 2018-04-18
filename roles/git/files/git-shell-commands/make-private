@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Copyright (c) 2017 Aaron LI <aly@aaronly.me>
+# MIT License
+#
+# Turn a public Git repository to be private to `cgit`.
+#
+# 2017-06-19
+#
+
+. ${HOME}/vars.conf
+
+if [ $# -ne 1 ]; then
+    echo "usage: make-private <repository.git>"
+    exit 1
+fi
+
+project="${1%.[gG][iI][tT]}.git"
+
+if [ ! -d "${project}" ]; then
+    echo "ERROR: repository '${project}' not exists!"
+    exit 2
+elif [ -L "${PUBLIC}/${project}" ]; then
+    rm "${PUBLIC}/${project}"
+    echo "Made repository '${project}' private."
+    exit 0
+else
+    echo "Repository '${project}' not public."
+    exit 0
+fi

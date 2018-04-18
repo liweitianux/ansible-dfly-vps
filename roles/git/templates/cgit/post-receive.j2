@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# post-receive hook for the cgit-static.git repo to checkout the
+# resources upon push, a.k.a., deploy on push.
+#
+# Aaron LI
+# 2018-04-18
+#
+
+GIT_DIR="{{ git.user.home }}/{{ git.cgit.static_repo }}/"
+TARGET="{{ git.cgit.root }}/static/"
+TARGET_BRANCH="master"
+
+while read oldrev newrev refname; do
+    branch=$(git rev-parse --symbolic --abbrev-ref ${refname})
+    if [ -n "${branch}" ] && [ "${branch}" = "${TARGET_BRANCH}" ]; then
+        echo "Deploying cgit static resources ..."
+        git --work-tree=${TARGET} --git-dir=${GIT_DIR} \
+            checkout ${TARGET_BRANCH} -f
+
+        NOW=$(date +"%Y%m%d-%H%M")
+        git tag release_${NOW} ${TARGET_BRANCH}
+
+        echo "   +==============================="
+        echo "   | DEPLOYMENT COMPLETED"
+        echo "   | Target branch: ${TARGET_BRANCH}"
+        echo "   | Target folder: ${TARGET}"
+        echo "   | Tag name     : release_${NOW}"
+        echo "   +==============================="
+    fi
+done

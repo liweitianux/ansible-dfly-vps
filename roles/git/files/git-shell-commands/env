@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Print current environment.
+#
+# Aaron LI
+# 2017-06-18
+#
+
+/usr/bin/env

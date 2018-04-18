@@ -1,0 +1,132 @@
+#
+# {{ git.cgit.root }}/cgitrc
+# Configuration file for `cgit` served at `code.aaronly.me`.
+# See https://git.zx2c4.com/cgit/tree/cgitrc.5.txt
+#
+# Aaron LI
+# 2017-06-19
+#
+
+# Title and heading of the index page
+root-title=Projects from Aaron LI
+
+# Subheading of the index page
+root-desc=The journey is long, but I shall search high and low.
+
+# More information on the index page
+#root-readme={{ git.cgit.root }}/static/about.html
+
+# File containing the footer that will be included verbatim at
+# the bottom of all pages
+footer={{ git.cgit.root }}/static/footer.html
+
+
+##
+## Static resources (URL configured via Nginx))
+##
+
+css=/static/cgit.css
+logo=/static/logo.png
+favicon=/static/favicon.ico
+
+
+##
+## Settings
+##
+
+# Root URL for all cgit links
+virtual-root=/
+
+# Set default clone URL using macro
+clone-url=https://git.{{ domains[0].name }}/$CGIT_REPO_URL
+
+# Allow HTTP transport git clone
+enable-http-clone=1
+
+# Do NOT show owner on index page
+enable-index-owner=0
+
+# Show extra links for each repository on the index page
+enable-index-links=1
+
+# Enable ASCII art commit history graph on the log pages
+enable-commit-graph=1
+
+# Show number of affected files per commit on the log pages
+enable-log-filecount=1
+
+# Show number of added/removed lines per commit on the log pages
+enable-log-linecount=1
+
+# Sort branches by date
+branch-sort=age
+
+# Enable statistics per week, month, and quarter
+max-stats=quarter
+
+# Allow download of tar.bz2
+snapshots=tar.bz2
+
+
+##
+## List of common mimetypes
+##
+
+mimetype.gif=image/gif
+mimetype.html=text/html
+mimetype.jpg=image/jpeg
+mimetype.jpeg=image/jpeg
+mimetype.pdf=application/pdf
+mimetype.png=image/png
+mimetype.svg=image/svg+xml
+
+# Highlight source code
+# Requires `py36-pygments` package
+#source-filter=/usr/local/lib/cgit/filters/syntax-highlighting.py
+# Requires `highlight` package
+source-filter={{ git.cgit.root }}/syntax-highlighting.sh
+
+# Format markdown, restructuredtext, manpages, text files, and
+# html files through the right converters
+about-filter=/usr/local/lib/cgit/filters/about-formatting.sh
+
+# Search for these files in the root of the default branch of
+# repositories for coming up with the about page:
+readme=:README.md
+readme=:readme.md
+readme=:README.mkd
+readme=:readme.mkd
+readme=:README.rst
+readme=:readme.rst
+readme=:README.html
+readme=:readme.html
+readme=:README.htm
+readme=:readme.htm
+readme=:README.txt
+readme=:readme.txt
+readme=:README
+readme=:readme
+readme=:INSTALL.md
+readme=:install.md
+readme=:INSTALL.mkd
+readme=:install.mkd
+readme=:INSTALL.rst
+readme=:install.rst
+readme=:INSTALL.html
+readme=:install.html
+readme=:INSTALL.htm
+readme=:install.htm
+readme=:INSTALL.txt
+readme=:install.txt
+readme=:INSTALL
+readme=:install
+
+
+##
+## Repositories
+##
+
+# NOTE: only the global settings before this directive will be
+#       applied to each repository.
+scan-path={{ git.user.home }}/{{ git.public_dir }}
+
