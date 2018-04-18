@@ -7,7 +7,14 @@ Created: 2018-02-14
 
 Introduction
 ------------
-TODO ...
+An Ansible playbook to manage a small (even 512 MB RAM) personal VPS to
+self-host various services including:
+* _DNS_ (NSD for authoritative DNS service)
+* _Email_ (Postfix, Dovecot)
+* _Web_ (Nginx, acme-client for Let's Encrypt certificates)
+* _CalDAV/CardDAV_ (Radicale with uWSGI)
+* _Git_ (Web interface via cgit with uWSGI)
+* _IRC Bouncer_ (ZNC)
 
 Playbooks
 ---------
@@ -80,6 +87,11 @@ Roles
   - Do *not* use database
   - No web interface
 
+* `git`
+  - Self-host Git repositories
+  - Web interface via [cgit](https://git.zx2c4.com/cgit/)
+  - Also manage and deploy the static resources of cgit via a Git repo
+
 * `shadowsocks`
   Setup ShadowSocks-libev for a useful proxy.
 
@@ -104,4 +116,4 @@ References
 
 License
 -------
-The MIT License
+[The MIT License](https://opensource.org/licenses/MIT)
