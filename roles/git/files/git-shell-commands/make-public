@@ -23,7 +23,7 @@ fi
 
 project="${1%.[gG][iI][tT]}.git"
 
-if [ ! -d "${project}" ]; then
+if [ ! -d "${HOME}/${project}" ]; then
     echo "ERROR: repository '${project}' not exists!"
     exit 3
 elif [ -L "${PUBLIC}/${project}" ]; then

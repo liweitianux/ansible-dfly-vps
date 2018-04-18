@@ -8,10 +8,10 @@
 
 . ${HOME}/vars.conf
 
-for repo in $(ls -d *.git); do
+for repo in $(ls -d ${HOME}/*.git); do
     is_bare_repo=$(git --git-dir="${repo}" rev-parse --is-bare-repository)
     if [ "${is_bare_repo}" = "true" ]; then
-        echo "* ${repo}"
+        echo "* $(basename ${repo})"
         if [ -e "${PUBLIC}/${repo}" ]; then
                 echo "      [public]"
         fi

@@ -50,12 +50,14 @@
   copy:
     src: git-shell-commands/  # trailing '/' -> directory contents
     dest: "{{ git.user.home }}/git-shell-commands/"
+  tags: git-cmds
 
 - name: add execution permission to git-shell commands
   file:
     path: "{{ git.user.home }}/git-shell-commands"
     mode: 0755
     recurse: true
+  tags: git-cmds
 
 - name: (local) github sync - check ssh key existence
   become: false
