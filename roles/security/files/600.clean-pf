@@ -16,7 +16,7 @@ case "$daily_clean_pf_enable" in
         : ${daily_clean_pf_expire:=86400}
         for table in $daily_clean_pf_tables; do
             echo "Cleanup table $table ..."
-	    pfctl -t $table -T expire $daily_clean_pf_expire
+	    pfctl -v -t $table -T expire $daily_clean_pf_expire
             rc=$?
         done
         ;;
