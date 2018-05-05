@@ -83,13 +83,8 @@
   copy:
     src: sieve/  # trailing '/' -> directory contents
     dest: /usr/local/etc/dovecot/sieve/
-  tags: dovecot
-
-- name: dovecot - compile sieve filters
-  command: >
-    find /usr/local/etc/dovecot/sieve/
-    -name '*.sieve'
-    -exec sievec '{}' ';'
+    owner: "{{ mail.vuser.name }}"
+    group: "{{ mail.vuser.name }}"
   tags: dovecot
 
 - name: dovecot - generate passdb and userdb

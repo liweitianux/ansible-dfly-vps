@@ -12,6 +12,7 @@ NOTE:
   write permission for the caller process:
   $ sievec before.d
   $ sievec after.d
+* Or change the directory's ownership to be "vmail:vmail".
 
 See:
 * https://wiki.dovecot.org/Pigeonhole/Sieve
