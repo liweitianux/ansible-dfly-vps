@@ -48,7 +48,7 @@
 - name: (local) github sync - check ssh key existence
   become: false
   stat:
-    path: "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+    path: "{{ git.github.keyfile }}"
   delegate_to: localhost
   register: stat_result
 
@@ -56,7 +56,7 @@
   become: false
   command: >
     ssh-keygen -t ed25519 -C "git:github-sync" -N ""
-    -f "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+    -f "{{ git.github.keyfile }}"
   delegate_to: localhost
   when: not stat_result.stat.exists
 
@@ -70,7 +70,7 @@
 
 - name: github sync - copy public key to the server
   copy:
-    src: "{{ playbook_dir }}/private/git/{{ git.github.keyname }}"
+    src: "{{ git.github.keyfile }}"
     dest: "{{ git.user.home }}/.ssh/id_{{ git.github.keytype }}"
     owner: "{{ git.user.name }}"
     mode: 0400

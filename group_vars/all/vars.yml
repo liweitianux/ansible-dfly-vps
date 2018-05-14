@@ -199,7 +199,7 @@ git:
     user: liweitianux
     api: "https://api.github.com"
     url: "git@github.com"
-    keyname: "github.key"
+    keyfile: "{{ playbook_dir }}/private/ssh/github.key"
     keytype: ed25519
   # Export public repositories
   cgit:
