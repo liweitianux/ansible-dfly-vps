@@ -6,3 +6,4 @@
 *.retry
 
 /private/
+/gitolite-admin/

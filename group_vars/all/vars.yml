@@ -6,7 +6,7 @@
 
 
 deploy_user: ansible
-ansible_ssh_private_key_file: ./private/ssh/ansible.key
+ansible_ssh_private_key_file: "{{ playbook_dir }}/private/ssh/ansible.key"
 
 pf:
   # number of simulataneous connections allowed from one host
@@ -190,8 +190,6 @@ git:
     name: git  # user & group name
     id: 5001  # uid & gid
     home: /home/git
-    shell: /usr/local/libexec/git-core/git-shell
-    ssh_keydir: "{{ playbook_dir }}/private/git/keys"
   # Name of the directory that contains links to the public repos
   public_dir: repos.public
   # Sync public repos to GitHub

@@ -8,6 +8,7 @@
     - cgit
     - uwsgi-py36
     - highlight
+    - gitolite
 
 - name: check user group existence
   command: pw groupshow {{ git.user.name }}
@@ -30,17 +31,8 @@
     pw useradd {{ git.user.name }}
     -u {{ git.user.id }} -g {{ git.user.name }}
     -d {{ git.user.home }} -m -M 0700
-    -s {{ git.user.shell }}
     -c "Git Repositories Owner"
   when: pw_cmd.rc != 0
-
-- name: add ssh keys
-  authorized_key:
-    user: "{{ git.user.name }}"
-    state: present
-    key: "{{ lookup('file', item) }}"
-  with_fileglob:
-    - "{{ git.user.ssh_keydir }}/*.pub"
 
 - name: generate vars.conf file
   template:
@@ -51,14 +43,7 @@
   copy:
     src: git-shell-commands/  # trailing '/' -> directory contents
     dest: "{{ git.user.home }}/git-shell-commands/"
-  tags: git-cmds
-
-- name: add execution permission to git-shell commands
-  file:
-    path: "{{ git.user.home }}/git-shell-commands"
     mode: 0755
-    recurse: true
-  tags: git-cmds
 
 - name: (local) github sync - check ssh key existence
   become: false
@@ -96,6 +81,61 @@
     state: directory
     owner: "{{ git.user.name }}"
     group: "{{ git.user.name }}"
+
+#
+# gitolite
+#
+
+- name: gitolite - copy the admin ssh key to the server
+  copy:
+    src: "{{ ansible_ssh_private_key_file }}.pub"
+    dest: "{{ git.user.home }}/admin.pub"
+    mode: 0644
+  tags: gitolite
+
+- name: gitolite - setup
+  become_user: "{{ git.user.name }}"
+  command: gitolite setup -pk "{{ git.user.home }}/admin.pub"
+  args:
+    chdir: "{{ git.user.home }}"
+    creates: "{{ git.user.home }}/.gitolite.rc"
+  tags: gitolite
+
+- name: gitolite - copy config
+  copy:
+    src: gitolite.rc
+    dest: "{{ git.user.home }}/.gitolite.rc"
+    mode: 0644
+  tags: gitolite
+
+- name: (local) gitolite - check local admin repo existence
+  become: false
+  stat:
+    path: "{{ playbook_dir }}/gitolite-admin"
+  delegate_to: localhost
+  register: stat_result
+  tags: gitolite
+
+- name: (local) gitolite - clone admin repo to local
+  become: false
+  command: >
+    env GIT_SSH_COMMAND="ssh -F /dev/null -p {{ ansible_ssh_port }} -i {{ ansible_ssh_private_key_file }} -o IdentitiesOnly=yes"
+    git clone
+    "{{ git.user.name }}@{{ domains[0].name }}:gitolite-admin.git"
+    "{{ playbook_dir }}/gitolite-admin"
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+  tags: gitolite
+
+- name: (local) gitolite - note about the push command
+  become: false
+  copy:
+    content: >
+      env GIT_SSH_COMMAND="ssh -F /dev/null -p {{ ansible_ssh_port }} -i {{ ansible_ssh_private_key_file }} -o IdentitiesOnly=yes"
+      git push
+    dest: "{{ playbook_dir }}/gitolite-admin/GIT_PUSH_CMD.sh"
+  delegate_to: localhost
+  tags: gitolite
 
 #
 # cgit
