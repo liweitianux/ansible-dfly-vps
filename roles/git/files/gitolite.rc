@@ -156,10 +156,10 @@
             # 'upstream',
 
             # updates 'description' file instead of 'gitweb.description' config item
-            # 'cgit',
+            'cgit',
 
             # allow repo-specific hooks to be added
-            # 'repo-specific-hooks',
+            'repo-specific-hooks',
 
         # performance, logging, monitoring...
 
