@@ -190,8 +190,6 @@ git:
     name: git  # user & group name
     id: 5001  # uid & gid
     home: /home/git
-  # Name of the directory that contains links to the public repos
-  public_dir: repos.public
   # Sync public repos to GitHub
   # NOTE: an unencrypted ssh keypair is required and been added to GitHub
   github:

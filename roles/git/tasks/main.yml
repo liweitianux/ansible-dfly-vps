@@ -34,54 +34,6 @@
     -c "Git Repositories Owner"
   when: pw_cmd.rc != 0
 
-- name: generate vars.conf file
-  template:
-    src: vars.conf.j2
-    dest: "{{ git.user.home }}/vars.conf"
-
-- name: copy git-shell commands
-  copy:
-    src: git-shell-commands/  # trailing '/' -> directory contents
-    dest: "{{ git.user.home }}/git-shell-commands/"
-    mode: 0755
-
-- name: (local) github sync - check ssh key existence
-  become: false
-  stat:
-    path: "{{ git.github.keyfile }}"
-  delegate_to: localhost
-  register: stat_result
-
-- name: (local) github sync - generate new ssh key pair
-  become: false
-  command: >
-    ssh-keygen -t ed25519 -C "git:github-sync" -N ""
-    -f "{{ git.github.keyfile }}"
-  delegate_to: localhost
-  when: not stat_result.stat.exists
-
-- name: github sync - create .ssh directory on the server
-  file:
-    path: "{{ git.user.home }}/.ssh"
-    state: directory
-    owner: "{{ git.user.name }}"
-    group: "{{ git.user.name }}"
-    mode: 0700
-
-- name: github sync - copy public key to the server
-  copy:
-    src: "{{ git.github.keyfile }}"
-    dest: "{{ git.user.home }}/.ssh/id_{{ git.github.keytype }}"
-    owner: "{{ git.user.name }}"
-    mode: 0400
-
-- name: create directory for linking public repos
-  file:
-    path: "{{ git.user.home }}/{{ git.public_dir }}"
-    state: directory
-    owner: "{{ git.user.name }}"
-    group: "{{ git.user.name }}"
-
 #
 # gitolite
 #
@@ -136,6 +88,40 @@
     dest: "{{ playbook_dir }}/gitolite-admin/GIT_PUSH_CMD.sh"
   delegate_to: localhost
   tags: gitolite
+
+#
+# Github sync
+#
+
+- name: (local) github sync - check ssh key existence
+  become: false
+  stat:
+    path: "{{ git.github.keyfile }}"
+  delegate_to: localhost
+  register: stat_result
+
+- name: (local) github sync - generate new ssh key pair
+  become: false
+  command: >
+    ssh-keygen -t ed25519 -C "git:github-sync" -N ""
+    -f "{{ git.github.keyfile }}"
+  delegate_to: localhost
+  when: not stat_result.stat.exists
+
+- name: github sync - create .ssh directory on the server
+  file:
+    path: "{{ git.user.home }}/.ssh"
+    state: directory
+    owner: "{{ git.user.name }}"
+    group: "{{ git.user.name }}"
+    mode: 0700
+
+- name: github sync - copy public key to the server
+  copy:
+    src: "{{ git.github.keyfile }}"
+    dest: "{{ git.user.home }}/.ssh/id_{{ git.github.keytype }}"
+    owner: "{{ git.user.name }}"
+    mode: 0400
 
 #
 # cgit
