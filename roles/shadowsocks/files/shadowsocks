@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+# Aaron LI
+# 2018-06-24
+#
+# PROVIDE: shadowsocks
+# REQUIRE: DAEMON
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf to enable shadowsocks:
+#
+# shadowsocks_enable (bool):	Set it to "YES" to enable shadowsocks
+#				Default is "NO".
+# shadowsocks_config (path):	Set the path to the config file
+#				Default is "/usr/local/etc/shadowsocks-libev/config.json",
+#				or "/usr/local/etc/shadowsocks-libev/${profile}.json".
+# shadowsocks_pidfile (path):	Set the path to the pid file
+#				Default is "/var/run/shadowsocks.pid", or
+#				"/var/run/shadowsocks-${profile}.pid".
+# shadowsocks_mode (str):	Set the shadowsocks mode (server or client).
+#				Default is "server".
+# shadowsocks_flags (str):	Set the shadowsocks command line arguments
+#				Default is "".
+#
+# If you would like to have multiple shadowsocks instances running, you can
+# define multiple profiles:
+#
+# shadowsocks_profiles (str):	Set the list of shadowsocks profiles
+#				Default is "".
+#
+# For each profile you can then define different options (except for
+# shadowsocks_enable) using the syntax shadowsocks_<profile>_<option>
+
+. /etc/rc.subr
+
+name="shadowsocks"
+rcvar="${name}_enable"
+
+load_rc_config ${name}
+
+_configdir="/usr/local/etc/shadowsocks-libev"
+
+: ${shadowsocks_enable="NO"}
+: ${shadowsocks_config="${_configdir}/config.json"}
+: ${shadowsocks_pidfile="/var/run/${name}.pid"}
+: ${shadowsocks_mode="server"}
+: ${shadowsocks_flags=""}
+
+is_profile() {
+	local profile
+
+	for profile in ${shadowsocks_profiles}; do
+		if [ "${profile}" = "$1" ]; then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+if [ -n "${shadowsocks_profiles}" ]; then
+	if [ -n "$2" ]; then
+		profile="$2"
+		if ! is_profile ${profile}; then
+			echo "$0: no such profile defined in shadowsocks_profiles."
+		        exit 1
+		fi
+		eval shadowsocks_config=\${shadowsocks_${profile}_config:-"${_configdir}/${profile}.json"}
+		eval shadowsocks_pidfile=\${shadowsocks_${profile}_pidfile:-"/var/run/${name}-${profile}.pid"}
+		eval shadowsocks_mode=\${shadowsocks_${profile}_mode:-"${shadowsocks_mode}"}
+		eval shadowsocks_flags=\${shadowsocks_${profile}_flags:-"${shadowsocks_flags}"}
+	elif [ -n "$1" ]; then
+		for profile in ${shadowsocks_profiles}; do
+			echo "Processing ${name} profile: ${profile}"
+			/usr/local/etc/rc.d/${name} $1 ${profile}
+		done
+		exit 0
+	fi
+fi
+
+pidfile="${shadowsocks_pidfile}"
+required_files="${shadowsocks_config}"
+
+if [ "${shadowsocks_mode}" = "server" ]; then
+	command="/usr/local/bin/ss-server" 
+else
+	command="/usr/local/bin/ss-local" 
+fi
+command_args="-c ${shadowsocks_config} -f ${pidfile} ${shadowsocks_flags}"
+
+stop_postcmd=stop_postcmd
+
+stop_postcmd()
+{
+	rm -f ${pidfile}
+}
+
+run_rc_command "$1"

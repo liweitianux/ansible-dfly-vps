@@ -4,29 +4,48 @@
     name: shadowsocks-libev
     state: present
 
+- name: copy rc script
+  copy:
+    src: shadowsocks
+    dest: /usr/local/etc/rc.d/shadowsocks
+    mode: 0555
+
 - name: setup configuration file
+  vars:
+    profile: "{{ item }}"
   template:
     src: config.json.j2
-    dest: /usr/local/etc/shadowsocks-libev/config.json
+    dest: /usr/local/etc/shadowsocks-libev/{{ profile.name }}.json
     mode: 0640
+  with_items: "{{ shadowsocks.profiles }}"
+
+- name: setup rc.conf
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^shadowsocks_profiles=.*\b{{ item.name }}\b'
+    line: 'shadowsocks_profiles="${shadowsocks_profiles} {{ item.name }}"'
+  with_items: "{{ shadowsocks.profiles }}"
+
+- name: enable service
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^shadowsocks_enable='
+    line: 'shadowsocks_enable="YES"'
   notify: restart-shadowsocks
 
-- name: enable and start service
-  command: rcenable shadowsocks-libev
+- name: start service
+  command: service shadowsocks start
 
 - name: show client-side config
   vars:
     config: |
       "{"
-          "server": "{{ ansible_ssh_host }}",
-          "server_port": {{ shadowsocks.port }},
           "local_port": 1080,
-          "password": "{{ shadowsocks.password }}",
-          "method": "{{ shadowsocks.method }}",
-          "timeout": 600,
-          "fast_open": true,
-          "reuse_port": true,
-          "no_delay": true
+          "server": "{{ ansible_ssh_host }}",
+          "server_port": {{ item.port }},
+          "password": "{{ item.password }}",
+          "method": "{{ shadowsocks.method }}"
       "}"
   debug:
-    msg: "{{ config.split('\n') }}"
+    msg: "profile<{{ item.name }}>: {{ config.split('\n') }}"
+  with_items: "{{ shadowsocks.profiles }}"

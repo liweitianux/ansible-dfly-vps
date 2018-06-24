@@ -1,11 +1,11 @@
 {
     "server": ["::0", "0.0.0.0"],
-    "server_port": {{ shadowsocks.port }},
-    "password": "{{ shadowsocks.password }}",
+    "server_port": {{ profile.port }},
+    "password": "{{ profile.password }}",
     "method": "{{ shadowsocks.method }}",
-    "timeout": 600,
-    "fast_open": true,
-    "reuse_port": true,
-    "no_delay": true,
-    "user": "nobody"
+    "timeout": {{ shadowsocks.timeout }},
+    "fast_open": {{ shadowsocks.fast_open | to_json }},
+    "reuse_port": {{ shadowsocks.reuse_port | to_json }},
+    "no_delay": {{ shadowsocks.no_delay | to_json }},
+    "user": "{{ shadowsocks.user }}"
 }

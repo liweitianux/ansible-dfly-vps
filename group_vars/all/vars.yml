@@ -125,10 +125,23 @@ mail:
     liwt.net: n-dVRtkDeJ8k4BuSphkV-GVso0zJJWO-Z6GYoz6ayOQ
     aaronly.me: rSh99lenrfS-HnzvEahEDYTj9UvoKeX4NdWmDzD-pxo
 
+# ShadowSocks servers
 shadowsocks:
-  port: 8989
-  password: "{{ vault_shadowsocks_password }}"
+  # common parameters
   method: "chacha20-ietf-poly1305"
+  timeout: 600
+  fast_open: false  # not supported on dfly
+  reuse_port: true
+  no_delay: true
+  user: "nobody"
+  #
+  profiles:
+    - name: default
+      port: 8989
+      password: "{{ vault_shadowsocks_password_default }}"
+    - name: share
+      port: 9090
+      password: "{{ vault_shadowsocks_password_share }}"
 
 vpn:
   interface: tun0
