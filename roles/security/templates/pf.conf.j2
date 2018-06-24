@@ -156,6 +156,7 @@ vpn_if = "{{ vpn.interface }}"
 # Network used by VPN on $vpn_if
 vpn_net  = "{{ vpn.network4 }}/24"
 
+{% set ss_ports = shadowsocks.profiles | map(attribute="port") | join(", ") %}
 # Allowed Services (incoming & outgoing)
 #   * {{ ansible_ssh_port }}: SSH on custom port
 #   * {{ ansible_ssh_port+1 }}: UDP port for Mosh connection
@@ -166,14 +167,14 @@ vpn_net  = "{{ vpn.network4 }}/24"
 #   * imaps: IMAP server
 #   * http & https: web service
 #   * git: Git clone etc.
-#   * {{ shadowsocks.port }}: ShadowSocks server
+#   * {{ ss_ports }}: ShadowSocks service(s)
 #   * {{ znc.port }}: ZNC IRC bouncer (tcp)
 #   * {{ vpn.port }}: OpenVPN service (tcp & udp)
 #
 # For restrictive incoming rules
 in_tcp_services_restricted = "{ {{ ansible_ssh_port }}, smtp, submission, imaps }"
 # For non-restrictive incoming rules
-in_tcp_services = "{ domain, http, https, {{ shadowsocks.port }}, {{ znc.port }}, {{ vpn.port }} }"
+in_tcp_services = "{ domain, http, https, {{ ss_ports }}, {{ znc.port }}, {{ vpn.port }} }"
 # For incoming UDP rules
 in_udp_services = "{ domain, {{ vpn.port }}, {{ ansible_ssh_port+1 }} }"
 # For outgoing rules
