@@ -49,9 +49,12 @@
     state: directory
   tags: opendkim
 
-- name: opendkim - generate domain keys
-  include_tasks: dkim-genkey.yml domain={{ item }}
-  with_items: "{{ mail.domains }}"
+- block:
+  - name: opendkim - generate domain keys
+    include_tasks: dkim-genkey.yml
+    vars:
+      domain: "{{ item }}"
+    with_items: "{{ mail.domains }}"
   tags: opendkim
 
 - name: opendkim - generate tables

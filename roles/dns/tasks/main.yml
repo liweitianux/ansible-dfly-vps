@@ -70,9 +70,12 @@
 
 - debug: var=zonefiles
 
-- name: NSD - generate zone files
-  include_tasks: nsd-zone.yml zonefile={{ item }}
-  with_items: "{{ zonefiles }}"
+- block:
+  - name: NSD - generate zone files
+    include_tasks: nsd-zone.yml
+    vars:
+      zonefile: "{{ item }}"
+    with_items: "{{ zonefiles }}"
   tags: zones
 
 # NOTE: requires variable `zonefiles`

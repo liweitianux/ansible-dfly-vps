@@ -111,9 +111,12 @@
   tags: acme
 
 # Credit: https://shasawas.wordpress.com/2016/05/23/how-to-loop-over-a-set-of-tasks-in-ansible/
-- name: acme - generate and copy domain private keys
-  include_tasks: acme-domainkey.yml domain={{ item.name }}
-  with_items: "{{ domains }}"
+- block:
+  - name: acme - generate and copy domain private keys
+    include_tasks: acme-domainkey.yml
+    vars:
+      domain: "{{ item.name }}"
+    with_items: "{{ domains }}"
   tags:
     - acme
     - acme-renew
@@ -157,6 +160,7 @@
       weekly_acme_client_renewscript="/usr/local/etc/acme/acme-client.sh"
       weekly_acme_client_deployscript="/usr/local/etc/acme/deploy.sh"
 
-- name: nginx - re-generate sites
-  include_tasks: nginx-gensites.yml
+- block:
+  - name: nginx - re-generate sites
+    include_tasks: nginx-gensites.yml
   tags: sites
