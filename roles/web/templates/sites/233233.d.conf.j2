@@ -1,0 +1,78 @@
+{% set domain = "233233.xyz" %}
+#
+# nginx/sites: reverse proxy to DuckDuckGo: duckduckgo.com
+#
+# Aaron LI
+# 2018-12-01
+#
+
+{% if domains_hascert[domain] %}
+server {
+    listen            443 ssl http2;
+    listen       [::]:443 ssl http2;
+    server_name  d.{{ domain }};
+
+    # SSL/TLS Certificate kindly provided by Let's Encrypt
+    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
+    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+
+    # Enable caching
+    #proxy_cache  CACHE;
+
+    # Replace cookie domain
+    proxy_cookie_domain  duckduckgo.com  $host;
+
+    # Hide some upstream headers to avoid duplicates/overrideing
+    proxy_hide_header  Strict-Transport-Security;
+    proxy_hide_header  Content-Security-Policy;
+    proxy_hide_header  X-Frame-Options;
+    proxy_hide_header  X-XSS-Protection;
+    proxy_hide_header  X-Content-Type-Options;
+    proxy_hide_header  Referrer-Policy;
+
+    # Substitute links in contents
+    # NOTE: Require to set Accept-Encoding="" header in order to request
+    #       *uncompressed* data from upstream, otherwise won't work!
+    sub_filter_types  text/css text/javascript application/json;
+    sub_filter_once   off;
+    sub_filter  //duckduckgo.com/        //$host/;
+    sub_filter  //proxy.duckduckgo.com/  //$host/__proxy/;
+
+    # Reverse proxy to duckduckgo.com
+    location / {
+        proxy_pass  https://duckduckgo.com;
+        proxy_set_header  Host     duckduckgo.com;
+        proxy_set_header  Referer  https://duckduckgo.com;
+
+        # NOTE: Set `Accept-Encoding=""` to request *uncompressed* data
+        #       from upstream, so that `sub_filter` works.
+        {% block proxy_set_header_common %}
+        proxy_set_header  User-Agent         $http_user_agent;
+        proxy_set_header  X-Real-IP          $remote_addr;
+        proxy_set_header  X-Forwarded-For    $proxy_add_x_forwarded_for;
+        proxy_set_header  X-Forwarded-Proto  $scheme;
+        proxy_set_header  Cookie             "";
+        proxy_set_header  Accept-Encoding    "";
+        proxy_set_header  Accept-Language    $http_accept_language;
+        {% endblock %}
+    }
+
+    # `/__proxy/` -> `proxy.duckduckgo.com`
+    location ^~ /__proxy/ {
+        proxy_pass  https://proxy.duckduckgo.com;
+        proxy_set_header  Host     proxy.duckduckgo.com;
+        proxy_set_header  Referer  https://proxy.duckduckgo.com;
+        {{ self.proxy_set_header_common() }}
+    }
+
+    # Forbid spider
+    if ($http_user_agent ~* "qihoobot|Baiduspider|Googlebot|Googlebot-Mobile|Googlebot-Image|Mediapartners-Google|Adsbot-Google|Feedfetcher-Google|Yahoo! Slurp|Yahoo! Slurp China|YoudaoBot|Sosospider|Sogou spider|Sogou web spider|MSNBot|ia_archiver|Tomato Bot") {
+        return  403;
+    }
+
+    location /robots.txt {
+        default_type  text/plain;
+        return  200  "User-agent: *\nDisallow: /\n";
+    }
+}
+{% endif %}
