@@ -5,9 +5,11 @@ Ansible Playbooks for Personal DragonFly BSD Server
 
 Created: 2018-02-14
 
+Ansible: 2.7.1
+
 Introduction
 ------------
-An Ansible playbook to manage a small (even 512 MB RAM) personal VPS to
+An Ansible playbook to manage a very small (read 512MB RAM) VPS to
 self-host various services including:
 * _DNS_ (NSD for authoritative DNS service)
 * _Email_ (Postfix, Dovecot)
@@ -108,6 +110,38 @@ Extensions
 ----------
 * `filter_plugins/`
   Custom template filters
+
+Usages
+------
+* Test host connection:
+
+    ```
+    $ ansible vultr -m ping
+    ```
+
+* List tasks:
+
+    ```
+    $ ansible-playbook -v --list-tasks
+    ```
+
+* Run (check only but don't make changes) the whole playbook:
+
+    ```
+    $ ansible-playbook -vD [--check]
+    ```
+
+* Run the playbook from a specific task:
+
+    ```
+    $ ansible-playbook -vD --step --start-at-task="..."
+    ```
+
+* Run the tasks with specific tags:
+
+    ```
+    $ ansible-playbook -vD --tags="..."
+    ```
 
 References
 ----------
