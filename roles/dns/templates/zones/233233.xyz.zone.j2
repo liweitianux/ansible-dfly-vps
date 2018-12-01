@@ -21,7 +21,7 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-{% for name in ["www", "g", "zw", "*"] %}
+{% for name in ["www", "d", "g", "zw", "*"] %}
 {{ name }}  IN  CNAME   @
 {% endfor %}
 
