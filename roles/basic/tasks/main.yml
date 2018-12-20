@@ -21,17 +21,40 @@
       hint.ehci.0.disabled=1
       hint.ahci.disabled=1
 
+- name: syslog - tweak daemon flags
+  lineinfile:
+    path: /etc/rc.conf
+    regexp: '^#?\s*syslogd_flags'
+    line: 'syslogd_flags="-ss -vv"'
+  tags: syslog
+
 - name: syslog - enable console log file (1/2)
   lineinfile:
     path: /etc/syslog.conf
     regexp: '^#?\s*console.info'
     line: "console.info	/var/log/console.log"
+  tags: syslog
 
 - name: syslog - enable console log file (2/2)
   file:
     path: /var/log/console.log
     state: touch
     mode: 0600
+  tags: syslog
+
+- name: syslog - enable all log file (1/2)
+  lineinfile:
+    path: /etc/syslog.conf
+    regexp: '^#?\s*\*\.\*\s*/var/log/all.log'
+    line: "*.*	/var/log/all.log"
+  tags: syslog
+
+- name: syslog - enable all log file (2/2)
+  file:
+    path: /var/log/all.log
+    state: touch
+    mode: 0600
+  tags: syslog
 
 - name: periodic - touch config file
   file:
