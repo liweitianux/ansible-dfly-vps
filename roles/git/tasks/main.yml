@@ -176,6 +176,7 @@
       uwsgi_profiles="${uwsgi_profiles} cgit"
       uwsgi_cgit_uid="git"
       uwsgi_cgit_gid="git"
+      uwsgi_cgit_socket_owner="git:www"
       uwsgi_cgit_flags="-L --log-reopen --logfile-chown --cgi /usr/local/www/cgit/cgit.cgi --env CGIT_CONFIG={{ git.cgit.root }}/cgitrc"
   notify: restart-cgit
 

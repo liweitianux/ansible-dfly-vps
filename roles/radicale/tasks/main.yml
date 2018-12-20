@@ -80,6 +80,7 @@
       uwsgi_profiles="${uwsgi_profiles} radicale"
       uwsgi_radicale_uid="radicale"
       uwsgi_radicale_gid="radicale"
+      uwsgi_radicale_socket_owner="radicale:www"
       uwsgi_radicale_flags="-L --log-reopen --logfile-chown --wsgi-file {{ radicale.wwwdir }}/radicale.wsgi --env RADICALE_CONFIG={{ radicale.etcdir }}/config"
 
 - name: enable and start uwsgi
