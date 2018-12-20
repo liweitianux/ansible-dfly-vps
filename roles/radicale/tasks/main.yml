@@ -88,9 +88,3 @@
 
 - name: start radicale
   command: service uwsgi start radicale
-
-- name: newsyslog - uwsgi/radicale log rotation
-  lineinfile:
-    path: /etc/newsyslog.conf
-    regexp: '/var/log/uwsgi-radicale.log'
-    line: "/var/log/uwsgi-radicale.log	radicale:radicale	640  7	   *	@T00  Z    /var/run/uwsgi-radicale.pid"
