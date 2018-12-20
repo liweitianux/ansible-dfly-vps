@@ -122,25 +122,25 @@ Usages
 * List tasks:
 
     ```
-    $ ansible-playbook -v --list-tasks
+    $ ansible-playbook deploy.yml -v --list-tasks
     ```
 
 * Run (check only but don't make changes) the whole playbook:
 
     ```
-    $ ansible-playbook -vD [--check]
+    $ ansible-playbook deploy.yml -vD [--check]
     ```
 
 * Run the playbook from a specific task:
 
     ```
-    $ ansible-playbook -vD --step --start-at-task="..."
+    $ ansible-playbook deploy.yml -vD --step --start-at-task="..."
     ```
 
 * Run the tasks with specific tags:
 
     ```
-    $ ansible-playbook -vD --tags="..."
+    $ ansible-playbook deploy.yml -vD --tags="..."
     ```
 
 References
