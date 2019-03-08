@@ -44,7 +44,7 @@ dns:
 
 nameservers:
   - name: afraid
-    xfr_ip: 174.37.196.55
+    xfr_ip: 69.65.50.192
     ns:
       - ns2.afraid.org
   - name: 1984hosting
