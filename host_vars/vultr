@@ -1,6 +1,6 @@
 # -*- mode: yaml; -*-
 ---
-ansible_ssh_host: vultr.liwt.net
+ansible_ssh_host: 45.77.201.74
 ansible_ssh_port: 8864
 ansible_python_interpreter: /usr/local/bin/python3
 
