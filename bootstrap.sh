@@ -21,9 +21,9 @@ else
     echo "Generating SSH key ..."
     ssh-keygen -t ed25519 -C "ansible" -f "${SSHKEY}"
     echo "Generated SSH key: ${SSHKEY}"
-    echo "Bootstrap target by installing Python2.7 ..."
+    echo "Bootstrap target by installing Python ..."
     ansible vultr -u root \
-        -m raw -a "pkg install -y python27"
+        -m raw -a "pkg update; pkg install -y python3"
     ansible-playbook \
         --verbose --diff \
         --ask-pass --ask-become-pass \
