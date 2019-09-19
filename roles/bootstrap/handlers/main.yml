@@ -1,3 +1,5 @@
 ---
 - name: restart-sshd
-  command: service sshd restart
+  service:
+    name: sshd
+    state: restarted
