@@ -84,14 +84,13 @@
 
 - name: pkg - install packages
   pkgng:
-    name: "{{ item }}"
+    name:
+      - tmux
+      - vim-console
+      - mosh
+      - rsync
+      - htop
     state: present
-  with_items:
-    - tmux
-    - vim-lite
-    - mosh
-    - rsync
-    - htop
 
 - name: vim - add basic configurations
   blockinfile:

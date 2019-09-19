@@ -3,11 +3,10 @@
 
 - name: install packages
   pkgng:
-    name: "{{ item }}"
+    name:
+      - py36-radicale2
+      - uwsgi
     state: present
-  with_items:
-    # - py36-radicale2
-    - uwsgi-py36
 
 - name: create data directory
   file:

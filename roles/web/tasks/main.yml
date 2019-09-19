@@ -1,11 +1,10 @@
 ---
 - name: install package
   pkgng:
-    name: "{{ item }}"
+    name:
+      - nginx
+      - acme-client
     state: present
-  with_items:
-    - nginx
-    - acme-client
 
 - name: (local) ssl/tls - check dhparam existence
   become: false

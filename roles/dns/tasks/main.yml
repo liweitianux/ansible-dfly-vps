@@ -1,11 +1,10 @@
 ---
 - name: install unbound and nsd
   pkgng:
-    name: "{{ item }}"
+    name:
+      - unbound
+      - nsd
     state: present
-  with_items:
-    - unbound
-    - nsd
 
 # "root-hints" is the file which contains the listing of primary root
 # DNS servers.  Unbound does have a listing of root DNS servers in its
