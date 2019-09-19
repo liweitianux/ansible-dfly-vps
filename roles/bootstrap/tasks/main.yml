@@ -59,6 +59,14 @@
     validate: "sshd -t -f %s"
   notify: restart-sshd
 
+- name: SSH - disable password login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PasswordAuthentication"
+    line: "PasswordAuthentication no"
+    validate: "sshd -t -f %s"
+  notify: restart-sshd
+
 - name: SSH - disable empty password login
   lineinfile:
     path: /etc/ssh/sshd_config
