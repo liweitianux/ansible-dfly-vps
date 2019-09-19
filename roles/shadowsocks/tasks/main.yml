@@ -36,7 +36,9 @@
   notify: restart-shadowsocks
 
 - name: start service
-  command: service shadowsocks start
+  service:
+    name: shadowsocks
+    state: started
 
 - name: show client-side config
   vars:

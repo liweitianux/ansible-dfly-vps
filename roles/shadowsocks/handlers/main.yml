@@ -1,3 +1,5 @@
 ---
 - name: restart-shadowsocks
-  command: service shadowsocks restart
+  service:
+    name: shadowsocks
+    state: restarted
