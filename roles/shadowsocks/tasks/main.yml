@@ -9,6 +9,7 @@
     src: shadowsocks
     dest: /usr/local/etc/rc.d/shadowsocks
     mode: 0555
+  notify: restart-shadowsocks
 
 - name: setup configuration file
   vars:
@@ -18,6 +19,7 @@
     dest: /usr/local/etc/shadowsocks-libev/{{ profile.name }}.json
     mode: 0640
   with_items: "{{ shadowsocks.profiles }}"
+  notify: restart-shadowsocks
 
 - name: setup rc.conf
   lineinfile:

@@ -1,7 +1,5 @@
 #!/bin/sh
 #
-# $FreeBSD$
-#
 # Aaron LI
 # 2018-06-24
 #
@@ -32,6 +30,7 @@
 #
 # For each profile you can then define different options (except for
 # shadowsocks_enable) using the syntax shadowsocks_<profile>_<option>
+#
 
 . /etc/rc.subr
 
