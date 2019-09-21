@@ -13,7 +13,7 @@ network:
     netmask: 255.255.254.0
     gateway: 45.77.200.1
   ipv6:
-    address: 2001:19f0:5:3166::c0f:fee
+    address: 2001:19f0:5:3166:5400:1ff:fe5d:df67
     prefixlen: 64
 
 # vim: set ft=yaml sw=2: #
