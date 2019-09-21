@@ -1,12 +1,20 @@
 ---
 - name: restart-unbound
-  command: rcrestart unbound
+  service:
+    name: unbound
+    state: restarted
 
 - name: reload-unbound
-  command: rcreload unbound
+  service:
+    name: unbound
+    state: reloaded
 
 - name: restart-nsd
-  command: rcrestart nsd
+  service:
+    name: nsd
+    state: restarted
 
 - name: reload-nsd
-  command: rcreload nsd
+  service:
+    name: nsd
+    state: reloaded
