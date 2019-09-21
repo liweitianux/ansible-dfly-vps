@@ -37,8 +37,10 @@
     path: /usr/local/etc/nginx/sites
     state: directory
 
-- name: nginx - generate sites
-  include_tasks: nginx-gensites.yml
+- name: nginx - generate basic site for ACME
+  template:
+    src: sites/00-acme-httpredirect.conf.j2
+    dest: /usr/local/etc/nginx/sites/00-acme-httpredirect.conf
 
 - name: nginx - copy nginx.conf
   copy:
