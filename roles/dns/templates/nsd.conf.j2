@@ -110,8 +110,10 @@ pattern:
     # Notify these slaves when the master zone changes, and allow them
     # to transfer zones.
 {% for server in nameservers %}
-    notify: {{ server.xfr_ip }} NOKEY  # {{ server.name }}
-    provide-xfr: {{ server.xfr_ip }} NOKEY  # {{ server.name }}
+{% for ip in server.xfr_ip %}
+    notify: {{ ip }} NOKEY  # {{ server.name }}
+    provide-xfr: {{ ip }} NOKEY  # {{ server.name }}
+{% endfor %}
 {% endfor %}
 
 
