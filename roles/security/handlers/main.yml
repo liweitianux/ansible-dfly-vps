@@ -1,6 +1,10 @@
 ---
 - name: restart-syslogd
-  command: rcrestart syslogd
+  service:
+    name: syslogd
+    state: restarted
 
 - name: reload-pf
-  command: rcreload pf
+  service:
+    name: pf
+    state: reloaded
