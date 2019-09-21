@@ -21,8 +21,18 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-{% for name in ["www", "d", "g", "zw", "*"] %}
+{% set subdomains = [] %}
+{% for name in domains -%}
+  {%- if name["name"] == domain -%}
+    {%- for sub in name["sub"] -%}
+      {{ subdomains.append(sub) }}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor %}
+{% for name in subdomains %}
 {{ name }}  IN  CNAME   @
 {% endfor %}
+
+*           IN  CNAME   @
 
 ; vim: set ft=bindzone:
