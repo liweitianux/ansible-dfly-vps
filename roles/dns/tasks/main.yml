@@ -20,21 +20,25 @@
     fetch -o /usr/local/etc/unbound/root.hints
     "https://www.internic.net/domain/named.cache"
   notify: reload-unbound
+  tags: unbound
 
 - name: unbound - check existence of control key/cert
   stat:
     path: /usr/local/etc/unbound/unbound_control.key
   register: stat_result
+  tags: unbound
 
 - name: unbound - generate self-signed key/cert for control
   command: unbound-control-setup
   when: not stat_result.stat.exists
+  tags: unbound
 
 - name: unbound - fetch initial anchor
   command: >
     unbound-anchor -a /usr/local/etc/unbound/root.key
     -r /usr/local/etc/unbound/root.hints
   ignore_errors: true
+  tags: unbound
 
 - name: unbound - copy configuration
   copy:
@@ -42,14 +46,17 @@
     dest: /usr/local/etc/unbound/unbound.conf
     validate: "unbound-checkconf %s"
   notify: reload-unbound
+  tags: unbound
 
 - name: unbound - enable and start service
   command: rcenable unbound
+  tags: unbound
 
 - name: setup resolv.conf
   copy:
     src: resolv.conf
     dest: /etc/resolv.conf
+  tags: unbound
 
 #
 # NSD
@@ -58,20 +65,25 @@
   stat:
     path: /usr/local/etc/nsd/nsd_control.key
   register: stat_result
+  tags: nsd
 
 - name: NSD - generate self-signed key/cert for control
   command: nsd-control-setup
   when: not stat_result.stat.exists
+  tags: nsd
 
 - name: NSD - create zones directory
   file:
     path: /usr/local/etc/nsd/zones
     state: directory
+  tags: nsd
 
 - name: NSD - get the list of zone files
   set_fact:
     zonefiles: "{{ lookup('fileglob', '../templates/zones/*.j2', wantlist=True) }}"
-  tags: zones
+  tags:
+    - nsd
+    - zones
 
 - debug: var=zonefiles
 
@@ -81,7 +93,9 @@
     vars:
       zonefile: "{{ item }}"
     with_items: "{{ zonefiles }}"
-  tags: zones
+  tags:
+    - nsd
+    - zones
 
 # NOTE: requires variable `zonefiles`
 - name: NSD - generate configuration
@@ -90,7 +104,10 @@
     dest: /usr/local/etc/nsd/nsd.conf
     validate: "nsd-checkconf %s"
   notify: reload-nsd
-  tags: zones
+  tags:
+    - nsd
+    - zones
 
 - name: NSD - enable and start service
   command: rcenable nsd
+  tags: nsd
