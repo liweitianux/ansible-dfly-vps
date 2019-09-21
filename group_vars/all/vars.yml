@@ -28,9 +28,10 @@ domains:
   - name: 233233.xyz
     sub:
       - www
-      - d
-      - g
-      - zw
+      - d  # duckduckgo
+      - g  # google
+      - w  # wikipedia
+      - zw  # zh wikipedia
   - name: 1314233.xyz
     sub:
       - www
