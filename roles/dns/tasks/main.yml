@@ -30,6 +30,12 @@
   command: unbound-control-setup
   when: not stat_result.stat.exists
 
+- name: unbound - fetch initial anchor
+  command: >
+    unbound-anchor -a /usr/local/etc/unbound/root.key
+    -r /usr/local/etc/unbound/root.hints
+  ignore_errors: true
+
 - name: unbound - copy configuration
   copy:
     src: unbound.conf
