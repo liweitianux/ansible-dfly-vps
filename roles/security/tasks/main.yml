@@ -21,17 +21,10 @@
   notify: restart-syslogd
   tags: sshlockout
 
-- name: periodic - copy clean-pf script
-  copy:
-    src: 600.clean-pf
-    dest: /etc/periodic/daily/600.clean-pf
-    mode: 0755
-
-- name: periodic - enable clean-pf
-  blockinfile:
-    path: /etc/periodic.conf
-    marker: '# {mark} ANSIBLE MANAGED - clean-pf'
-    block: |
-      # Clean up PF tables
-      daily_clean_pf_enable="YES"
-      daily_clean_pf_tables="bruteforce"
+- name: cron - expire PF table (bruteforce)
+  cron:
+    name: "pf-expire-table-bruteforce"
+    user: root
+    minute: "0"
+    hour: "*/2"  # every 2 hours
+    job: "pfctl -t bruteforce -T expire 86400 >/dev/null"
