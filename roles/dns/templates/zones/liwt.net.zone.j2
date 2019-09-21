@@ -34,9 +34,19 @@ $TTL        {{ dns.ttl }}
 @           IN  A       {{ network.ipv4.address }}
 @           IN  AAAA    {{ network.ipv6.address }}
 
-{% for name in ["vultr", "www", "git", "dav", "*"] %}
+{% set subdomains = [] %}
+{% for name in domains -%}
+  {%- if name["name"] == domain -%}
+    {%- for sub in name["sub"] -%}
+      {{ subdomains.append(sub) }}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endfor %}
+{% for name in subdomains | reject("==", "mail") | list %}
 {{ name }}  IN  CNAME   @
 {% endfor %}
+
+*           IN  CNAME   @
 
 ; Mail server
 {% if domain == network.domain %}
@@ -48,11 +58,11 @@ mail        IN  AAAA    {{ network.ipv6.address }}
 @           IN  TXT     "google-site-verification={{ mail['google-site-verification'][domain] }}"
 {% set ruatxt = " rua=mailto:" + mail.dmarc.rua[domain] + ";" %}
 {% set ruf = mail.dmarc.ruf | default({}) %}
-{% if ruf[domain] is defined %}
-{% set ruftxt = " ruf=mailto:" + ruf[domain] + ";" %}
-{% else %}
-{% set ruftxt = "" %}
-{% endif %}
+{% if ruf[domain] is defined -%}
+  {%- set ruftxt = " ruf=mailto:" + ruf[domain] + ";" -%}
+{%- else -%}
+  {%- set ruftxt = "" -%}
+{%- endif %}
 _dmarc      IN  TXT     "v=DMARC1; p={{ mail.dmarc.p }}; sp={{ mail.dmarc.sp }}; pct={{ mail.dmarc.pct }}; adkim={{ mail.dmarc.adkim }}; aspf={{ mail.dmarc.aspf }}; fo={{ mail.dmarc.fo }};{{ ruatxt }}{{ ruftxt }}"
 {% if domain_key is defined %}
 {{ domain_key | dkim_record(selector=mail.dkim.selector) | join("\n") }}
