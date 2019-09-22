@@ -1,12 +1,18 @@
 ---
 - name: reload-opendkim
-  command: rcreload milter-opendkim
+  service:
+    name: milter-opendkim
+    state: reloaded
 
 - name: reload-postfix
-  command: rcreload postfix
+  service:
+    name: postfix
+    state: reloaded
 
 - name: reload-dovecot
-  command: rcreload dovecot
+  service:
+    name: dovecot
+    state: reloaded
 
 - name: update-aliases
   command: postalias /etc/mail/aliases
