@@ -174,9 +174,16 @@ znc:
   networks:
     # EFNet: http://www.efnet.org/?module=servers
     - name: efnet
-      server: efnet.port80.se
-      port: 6667
-      ssl: false
+      servers:
+        - name: irc.choopa.net
+          port: 9999
+          ssl: true
+        - name: irc.underworld.no
+          port: 6697
+          ssl: true
+        - name: efnet.port80.se
+          port: 6697
+          ssl: true
       # Without the beginning '#'
       channels:
         - dragonflybsd

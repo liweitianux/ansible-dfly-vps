@@ -22,6 +22,8 @@ SSLCertFile = {{ znc.data_dir }}/ssl.crt
 SSLKeyFile = {{ znc.data_dir }}/ssl.key
 SSLDHParamFile = /usr/local/etc/ssl/dhparam4096.pem
 
+LoadModule = adminlog
+
 // NOTE: DragonFly BSD doesn't allow using "IPV6_V6ONLY=0" to bind on
 //       both IPv4 & IPv6, therefore bind them separately.
 {% for listener in ["ipv4", "ipv6"] %}
@@ -89,10 +91,12 @@ SSLDHParamFile = /usr/local/etc/ssl/dhparam4096.pem
         // Auth with NickServ
         LoadModule = nickserv
 
-        Server = {{ net.server }} {% if net.ssl|default(false) %}+{% endif%}{{ net.port }} {{ net.password|default("") }}
-        {% if net.fingerprint is defined -%}
-        TrustedServerFingerprint = {{ net.fingerprint }}
-        {% endif %}
+        {% for server in net.servers -%}
+        Server = {{ server.name }} {% if server.ssl|default(false) %}+{% endif%}{{ server.port }} {{ server.password|default("") }}
+        {% endfor %}
+
+        TrustPKI = true
+        TrustAllCerts = true
 
         {% for ch in net.channels -%}
         <Chan #{{ ch | regex_replace('^#', '') }}>
