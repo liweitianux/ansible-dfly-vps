@@ -150,23 +150,6 @@
     dest: "{{ git.cgit.root }}/syntax-highlighting.sh"
     mode: 0755
 
-- name: cgit - create static repo
-  become_user: "{{ git.user.name }}"
-  command: >
-    ./git-shell-commands/create
-    {{ git.cgit.static_repo }}
-    "cgit static resources repo"
-  args:
-    chdir: "{{ git.user.home }}"
-    creates: "{{ git.user.home }}/{{ git.cgit.static_repo }}"
-
-- name: cgit - add post-receive hook to the static repo
-  template:
-    src: cgit/post-receive.j2
-    dest: "{{ git.user.home }}/{{ git.cgit.static_repo }}/hooks/post-receive"
-    owner: "{{ git.user.name }}"
-    mode: 0755
-
 - name: uwsgi - setup cgit
   blockinfile:
     path: /etc/rc.conf
@@ -186,3 +169,17 @@
   service:
     name: uwsgi
     state: restarted
+
+- name: (local) cgit - generate deploy hook for cgit-static repo
+  become: false
+  template:
+    src: cgit-static-deploy.j2
+    dest: "{{ playbook_dir }}/gitolite-admin/local/hooks/repo-specific/cgit-static-deploy"
+    mode: 0755
+  delegate_to: localhost
+
+- debug:
+    msg:
+      - "NOTE:"
+      - "Need to set the post-preceive hook for 'cgit-static' repo:"
+      - "gitolite-admin/local/hooks/repo-specific/cgit-static-deploy"
