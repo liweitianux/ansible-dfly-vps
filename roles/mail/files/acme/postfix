@@ -1,6 +1,0 @@
-#!/bin/sh
-#
-# ACME deployment script
-#
-
-reload postfix
