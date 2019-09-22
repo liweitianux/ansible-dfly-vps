@@ -1,3 +1,5 @@
 ---
 - name: restart-cgit
   command: service uwsgi restart cgit
+  args:
+    warn: false

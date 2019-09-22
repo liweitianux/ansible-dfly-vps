@@ -140,7 +140,7 @@
 
 - name: cgit - generate config file
   template:
-    src: cgit/cgitrc.j2
+    src: cgitrc.j2
     dest: "{{ git.cgit.root }}/cgitrc"
   notify: restart-cgit
 
@@ -167,7 +167,7 @@
     owner: "{{ git.user.name }}"
     mode: 0755
 
-- name: cgit - setup with uwsgi in rc.conf
+- name: uwsgi - setup cgit
   blockinfile:
     path: /etc/rc.conf
     marker: "# {mark} ANSIBLE MANAGED - uwsgi/cgit"
@@ -179,8 +179,10 @@
       uwsgi_cgit_flags="-L --log-reopen --logfile-chown --cgi /usr/local/www/cgit/cgit.cgi --env CGIT_CONFIG={{ git.cgit.root }}/cgitrc"
   notify: restart-cgit
 
-- name: enable and start uwsgi
+- name: uwsgi - enable and start service
   command: rcenable uwsgi
 
-- name: start cgit
-  command: service uwsgi start cgit
+- name: uwsgi - restart to make sure cgit is started
+  service:
+    name: uwsgi
+    state: restarted
