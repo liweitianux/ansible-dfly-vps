@@ -510,8 +510,8 @@ smtpd_tls_ask_ccert = yes
 
 # TLS certificate and key for this server (host)
 #
-smtpd_tls_cert_file = /usr/local/etc/ssl/acme/$mydomain/fullchain.pem
-smtpd_tls_key_file = /usr/local/etc/ssl/acme/private/$mydomain.pem
+smtpd_tls_cert_file = {{ web.ssl_root }}/$mydomain/fullchain
+smtpd_tls_key_file = {{ web.ssl_root }}/$mydomain/key
 
 # A CA bundle used by Postfix to validate remote servers' certificate.
 # NOTE: install package 'ca_root_nss'.

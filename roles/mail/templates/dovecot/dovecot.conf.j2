@@ -308,8 +308,8 @@ ssl = required
 # PEM encoded X.509 SSL/TLS certificate and private key.
 # They're opened before dropping root privileges, so preferred
 # permissions is: root:root, 0400.
-ssl_cert = </usr/local/etc/ssl/acme/{{ mydomain }}/fullchain.pem
-ssl_key = </usr/local/etc/ssl/acme/private/{{ mydomain }}.pem
+ssl_cert = <{{ web.ssl_root }}/{{ mydomain }}/fullchain
+ssl_key = <{{ web.ssl_root }}/{{ mydomain }}/key
 
 # DH parameters file.
 ssl_dh = </usr/local/etc/ssl/dhparam4096.pem
