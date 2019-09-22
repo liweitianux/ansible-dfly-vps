@@ -13,7 +13,7 @@ server {
 
     location ^~ /.well-known/acme-challenge/ {
         default_type  text/plain;
-        root          /usr/local/www/acme;
+        root          {{ web.acme_webroot }};
     }
     location = /.well-known/acme-challenge/ {
         return  404;

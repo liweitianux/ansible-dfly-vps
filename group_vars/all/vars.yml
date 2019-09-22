@@ -14,6 +14,9 @@ pf:
   # rate of new connections allowed from one host
   max_conn_rate: 15/5  # 15 of connections per 5 seconds
 
+web:
+  acme_webroot: /home/www/acme
+
 domains:
   - name: liwt.net
     # sub-domains for which to request certificates
