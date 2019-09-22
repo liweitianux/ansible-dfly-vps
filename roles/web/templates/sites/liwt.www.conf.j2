@@ -26,8 +26,8 @@ server {
     server_name  www.{{ domain }};
 
     # SSL/TLS Certificate kindly provided by Let's Encrypt
-    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
-    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+    ssl_certificate      {{ web.ssl_root }}/{{ domain }}/fullchain;
+    ssl_certificate_key  {{ web.ssl_root }}/{{ domain }}/key;
 
     return  301  $scheme://{{ domain }}$request_uri;
 }
@@ -38,8 +38,8 @@ server {
     server_name  {{ domain }};
 
     # SSL/TLS Certificate kindly provided by Let's Encrypt
-    ssl_certificate      /usr/local/etc/ssl/acme/{{ domain }}/fullchain.pem;
-    ssl_certificate_key  /usr/local/etc/ssl/acme/private/{{ domain }}.pem;
+    ssl_certificate      {{ web.ssl_root }}/{{ domain }}/fullchain;
+    ssl_certificate_key  {{ web.ssl_root }}/{{ domain }}/key;
 
     # Website location
     root   /home/www/www;
