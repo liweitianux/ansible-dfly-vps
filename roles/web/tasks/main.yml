@@ -12,6 +12,7 @@
     path: "{{ playbook_dir }}/private/ssl/dhparam4096.pem"
   delegate_to: localhost
   register: stat_result
+  tags: nginx
 
 - name: (local) ssl/tls - generate dhparam (4096 bit)
   become: false
@@ -20,27 +21,32 @@
     -out "{{ playbook_dir }}/private/ssl/dhparam4096.pem" 4096
   delegate_to: localhost
   when: not stat_result.stat.exists
+  tags: nginx
 
 - name: ssl/tls - copy dhparam
   copy:
     src: "{{ playbook_dir }}/private/ssl/dhparam4096.pem"
     dest: /usr/local/etc/ssl/dhparam4096.pem
     mode: 0444
+  tags: nginx
 
 - name: nginx - copy conf.d/ config directory
   copy:
     src: nginx/conf.d/  # trailing '/' -> directory contents
     dest: /usr/local/etc/nginx/conf.d/
+  tags: nginx
 
 - name: nginx - create sites/ directory
   file:
     path: /usr/local/etc/nginx/sites
     state: directory
+  tags: nginx
 
 - name: nginx - generate basic site for ACME
   template:
     src: sites/00-acme-httpredirect.conf.j2
     dest: /usr/local/etc/nginx/sites/00-acme-httpredirect.conf
+  tags: nginx
 
 - name: nginx - copy nginx.conf
   copy:
@@ -50,20 +56,24 @@
     #      include other config files!
     #validate: "nginx -t -c %s"
   notify: reload-nginx
+  tags: nginx
 
 - name: nginx - check configuration
   command: nginx -t
+  tags: nginx
 
 - name: nginx - enable and start
   command: rcenable nginx
+  tags: nginx
 
-- name: newsyslog - nginx log rotation
+- name: nginx - set newsyslog to rotate log file
   blockinfile:
     path: /etc/newsyslog.conf
     marker: '# {mark} ANSIBLE MANAGED - nginx'
     block: |
       /var/log/nginx/access.log		644  7	   *	@T00  Z    /var/run/nginx.pid
       /var/log/nginx/error.log		644  7	   *	@T00  Z    /var/run/nginx.pid
+  tags: nginx
 
 - name: acme - copy scripts
   copy:
