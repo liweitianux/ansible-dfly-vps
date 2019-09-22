@@ -1,6 +1,3 @@
 ---
 - name: reload-nginx
   command: rcreload nginx
-
-- name: deploy-acme
-  command: sh /usr/local/etc/acme/deploy.sh
