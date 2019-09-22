@@ -1,7 +1,7 @@
 ---
 - name: domains - check certificate existence
   stat:
-    path: /usr/local/etc/ssl/acme/{{ item.name }}/fullchain.pem
+    path: "{{ web.ssl_root }}/{{ item.name }}/fullchain"
   register: stat
   with_items: "{{ domains }}"
 

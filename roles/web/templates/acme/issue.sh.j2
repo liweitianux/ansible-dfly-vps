@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Use 'acme.sh' to issue certificates.
+#
+# Aaron LI
+# 2019-09-21
+#
+
+{% for domain in domains %}
+acme.sh --issue --log /var/log/acme.sh.log \
+    --config-home {{ web.acme_home }}/.acme.sh \
+    --domain {{ domain.name }} \
+    {% for sub in domain.sub %}--domain {{ sub }}.{{ domain.name }} {% endfor %} \
+    --webroot {{ web.acme_webroot }} ||
+    echo "WARNING: exit with non-zero code: $?"
+
+{% endfor %}
+
+acme.sh --list

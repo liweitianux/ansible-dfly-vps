@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Deploy the issued certificates.
+#
+# Aaron LI
+# 2019-09-21
+#
+
+SSL_ROOT="{{ web.ssl_root }}"
+[ -d "${SSL_ROOT}" ] || mkdir -p -m 0700 ${SSL_ROOT}
+
+{% for domain in domains %}
+CERT_DIR="${SSL_ROOT}/{{ domain.name }}"
+[ -d "${CERT_DIR}" ] || mkdir -m 0700 ${CERT_DIR}
+acme.sh --install-cert --log /var/log/acme.sh.log \
+    --config-home {{ web.acme_home }}/.acme.sh \
+    --cert-home {{ web.acme_home }}/certs \
+    --domain {{ domain.name }} \
+    --key-file ${CERT_DIR}/key \
+    --cert-file ${CERT_DIR}/cert \
+    --fullchain-file ${CERT_DIR}/fullchain
+
+{% endfor %}
+
+echo "Reload relevant services ..."
+SCRIPT="{{ web.acme_home }}/deploy.local.sh"
+[ -f "${SCRIPT}" ] && sh ${SCRIPT} || exit 0

@@ -15,7 +15,9 @@ pf:
   max_conn_rate: 15/5  # 15 of connections per 5 seconds
 
 web:
+  acme_home: /var/db/acme
   acme_webroot: /home/www/acme
+  ssl_root: /usr/local/etc/ssl/acme
 
 domains:
   - name: liwt.net

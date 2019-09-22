@@ -3,7 +3,7 @@
   pkgng:
     name:
       - nginx
-      - acme-client
+      - acme.sh
     state: present
 
 - name: (local) ssl/tls - check dhparam existence
@@ -75,103 +75,105 @@
       /var/log/nginx/error.log		644  7	   *	@T00  Z    /var/run/nginx.pid
   tags: nginx
 
-- name: acme - copy scripts
-  copy:
-    src: "{{ item }}"
-    dest: /usr/local/etc/acme/{{ item | basename }}
-    mode: 0755
-  with_fileglob:
-    - "acme/*.sh"
-  tags: acme
-
-- name: acme - copy deployment scripts
-  copy:
-    src: acme/deploy.d/  # note the trailing '/'
-    dest: /usr/local/etc/acme/deploy.d/
-  tags: acme
-
-- name: (local) acme - check account private key existence
-  become: false
-  stat:
-    path: "{{ playbook_dir }}/private/acme/privkey.pem"
-  delegate_to: localhost
-  register: stat_result
-  tags: acme
-
-- name: (local) acme - generate account private key (4096 bit)
-  become: false
-  command: >
-    openssl genrsa
-    -out "{{ playbook_dir }}/private/acme/privkey.pem" 4096
-  delegate_to: localhost
-  when: not stat_result.stat.exists
-  tags: acme
-
-- name: acme - copy account private key
-  copy:
-    src: "{{ playbook_dir }}/private/acme/privkey.pem"
-    dest: /usr/local/etc/acme/privkey.pem
-    mode: 0400
-  tags: acme
-
-- name: acme - create domain private directory
+- name: acme - create webroot directory
   file:
-    path: /usr/local/etc/ssl/acme/private/
+    path: "{{ web.acme_webroot }}/.well-known/acme-challenge"
     state: directory
-    mode: 0700
-  tags: acme
-
-# Credit: https://shasawas.wordpress.com/2016/05/23/how-to-loop-over-a-set-of-tasks-in-ansible/
-- block:
-  - name: acme - generate and copy domain private keys
-    include_tasks: acme-domainkey.yml
-    vars:
-      domain: "{{ item.name }}"
-    with_items: "{{ domains }}"
-  tags:
-    - acme
-    - acme-renew
-
-- name: acme - generate domains.txt
-  template:
-    src: domains.txt.j2
-    dest: /usr/local/etc/acme/domains.txt
-  tags:
-    - acme
-    - acme-renew
-
-- name: acme - create challenge directory
-  file:
-    path: /usr/local/www/acme/.well-known/acme-challenge
-    state: directory
+    owner: acme
     group: www
+    mode: 0755
     recurse: true
   tags: acme
 
-- name: nginx - force reload
-  command: rcreload nginx
+- name: acme.sh - touch log file
+  file:
+    path: /var/log/acme.sh.log
+    owner: acme
+    group: acme
+    mode: 0640
+    state: touch
+  tags: acme
+
+- name: acme.sh - set newsyslog to rotate log file
+  lineinfile:
+    path: /etc/newsyslog.conf
+    regexp: '^#?/var/log/acme.sh.log'
+    line: "/var/log/acme.sh.log  acme:acme       640  90    *    @T00   Z"
+  tags: acme
+
+- name: acme.sh - generate issue script
+  template:
+    src: acme/issue.sh.j2
+    dest: "{{ web.acme_home }}/issue.sh"
+    mode: 0755
   tags:
     - acme
     - acme-renew
 
-- name: acme - request domain certificates
-  command: sh /usr/local/etc/acme/acme-client.sh -e
-  notify: deploy-acme
+- name: acme.sh - issue certificates
+  become: true
+  become_user: acme
+  command: sh "{{ web.acme_home }}/issue.sh"
   tags:
     - acme
     - acme-renew
 
-- name: acme - setup periodic tasks for cert renewal
-  blockinfile:
-    path: /etc/periodic.conf
-    marker: "# {mark} ANSIBLE MANAGED - acme"
-    block: |
-      # Auto renew certificates with acme-client
-      weekly_acme_client_enable="YES"
-      weekly_acme_client_renewscript="/usr/local/etc/acme/acme-client.sh"
-      weekly_acme_client_deployscript="/usr/local/etc/acme/deploy.sh"
+- name: acme.sh - generate deploy script
+  template:
+    src: acme/deploy.sh.j2
+    dest: "{{ web.acme_home }}/deploy.sh"
+    mode: 0755
+  tags:
+    - acme
+    - acme-renew
+
+- name: acme.sh - deploy certificates
+  command: sh "{{ web.acme_home }}/deploy.sh"
+  tags:
+    - acme
+    - acme-renew
+
+- name: acme.sh - touch local deploy script
+  file:
+    path: "{{ web.acme_home }}/deploy.local.sh"
+    mode: 0755
+    state: touch
+  tags: acme
+
+- name: acme.sh - add nginx reload to deploy
+  lineinfile:
+    path: "{{ web.acme_home }}/deploy.local.sh"
+    line: "service nginx reload"
+  tags: acme
+
+- name: acme.sh - generate renew script
+  copy:
+    dest: "{{ web.acme_home }}/renew.sh"
+    mode: 0755
+    content: |
+      acme.sh --cron
+      sh {{ web.acme_home }}/deploy.sh
+  tags: acme
+
+- name: acme.sh - install cron job to renew (1)
+  cron:
+    user: acme
+    name: MAILTO
+    env: true
+    job: root
+  tags: acme
+
+- name: acme.sh - install cron job to renew (2)
+  cron:
+    user: acme
+    name: "acme.sh-renew"
+    special_time: monthly
+    job: "sh {{ web.acme_home }}/renew.sh"
+  tags: acme
 
 - block:
   - name: nginx - re-generate sites
     include_tasks: nginx-gensites.yml
-  tags: sites
+  tags:
+    - acme
+    - sites
