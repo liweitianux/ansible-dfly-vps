@@ -19,7 +19,7 @@ def cryptpass(p):
     hashtype = "$6$"
     saltlen = 16
     salt = os.urandom(saltlen)
-    salt = base64.b64encode(salt)[:saltlen]
+    salt = base64.b64encode(salt)[:saltlen].decode("utf-8")
     return crypt.crypt(p, hashtype+salt)
 
 
@@ -46,9 +46,9 @@ def znc_makepass(p, method="sha256", saltlen=20):
     ZNC password format: <method>#<hash>#<salt>
     """
     salt = os.urandom(saltlen)
-    salt = base64.b64encode(salt)[:saltlen]
+    salt = base64.b64encode(salt)[:saltlen].decode("utf-8")
     s = p + salt
-    h = getattr(hashlib, method)(s)
+    h = getattr(hashlib, method)(s.encode("utf-8"))
     return "%s#%s#%s" % (method, h.hexdigest(), salt)
 
 
