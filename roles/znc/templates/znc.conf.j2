@@ -12,21 +12,15 @@
 // Also check http://wiki.znc.in/Configuration
 //
 
-Version = 1.6.5
+Version = 1.7.4
 HideVersion = true
 MaxBufferSize = {{ znc.buffer_size }}
 SSLProtocols = +TLSv1.2 -TLSv1.1 -TLSv1 -SSLv3 -SSLv2
 
-// SSL: https://wiki.znc.in/Signed_SSL_certificate
-// Everything in a single file, in the order from the most *private* to
-// the most *public* entries, except for the root certificate.
-// i.e., cat ssl.key ssl.cert dhparam.pem > znc.allinone.pem
-SSLCertFile = {{ znc.data_dir }}/znc.allinone.pem
-
-// NOTE: SSLKeyFile & SSLDHParamFile requires version >=1.7
-//SSLCertFile = {{ znc.data_dir }}/znc.ssl.crt
-//SSLKeyFile = {{ znc.data_dir }}/znc.ssl.key
-//SSLDHParamFile = /usr/local/etc/ssl/dhparam4096.pem
+// NOTE: SSLKeyFile & SSLDHParamFile require version >=1.7
+SSLCertFile = {{ znc.data_dir }}/ssl.crt
+SSLKeyFile = {{ znc.data_dir }}/ssl.key
+SSLDHParamFile = /usr/local/etc/ssl/dhparam4096.pem
 
 // NOTE: DragonFly BSD doesn't allow using "IPV6_V6ONLY=0" to bind on
 //       both IPv4 & IPv6, therefore bind them separately.

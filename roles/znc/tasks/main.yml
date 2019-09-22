@@ -22,6 +22,15 @@
     mode: 0600
   notify: reload-znc
 
+- name: znc - generate SSL cert deploy script
+  template:
+    src: deploy_ssl.sh.j2
+    dest: "{{ znc.data_dir }}/deploy_ssl.sh"
+    mode: 0755
+
+- name: znc - deploy SSL cert
+  command: sh {{ znc.data_dir }}/deploy_ssl.sh
+
 - name: znc - enable service
   blockinfile:
     path: /etc/rc.conf
@@ -31,10 +40,12 @@
       znc_enable="YES"
 
 - name: znc - start service
-  command: rcstart znc
+  service:
+    name: znc
+    state: started
 
-- name: acme - generate deployment script
-  template:
-    src: acme/znc.j2
-    dest: /usr/local/etc/acme/deploy.d/znc
+- name: acme - add znc to deploy
+  lineinfile:
+    path: "{{ web.acme_home }}/deploy.local.sh"
+    line: sh {{ znc.data_dir }}/deploy_ssl.sh
   tags: acme

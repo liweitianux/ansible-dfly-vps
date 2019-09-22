@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Copy the issued SSL key and certificate to deploy them for ZNC.
+#
+# Reference: https://wiki.znc.in/Signed_SSL_certificate
+#
+
+cp -v {{ web.ssl_root }}/{{ network.domain }}/key \
+    {{ znc.data_dir }}/ssl.key
+cp -v {{ web.ssl_root }}/{{ network.domain }}/fullchain \
+    {{ znc.data_dir }}/ssl.crt
+chown znc:znc {{ znc.data_dir }}/ssl.key {{ znc.data_dir }}/ssl.crt
+chmod 0400    {{ znc.data_dir }}/ssl.key {{ znc.data_dir }}/ssl.crt
+
+if pgrep -x znc >/dev/null; then
+    echo -n "Reloading service znc ... "
+    # ZNC's service file doesn't support 'reload' command
+    killall -SIGHUP znc
+    echo "done"
+else
+    echo "WARNING: service znc is not running" >&2
+fi
