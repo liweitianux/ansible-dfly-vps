@@ -1,3 +1,5 @@
 ---
 - name: reload-nginx
-  command: rcreload nginx
+  service:
+    name: nginx
+    state: reloaded
