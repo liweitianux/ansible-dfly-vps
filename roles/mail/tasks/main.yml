@@ -131,29 +131,6 @@
     state: link
     force: true
 
-- name: postfix - disable sendmail periodic tasks
-  blockinfile:
-    path: /etc/periodic.conf
-    marker: "# {mark} ANSIBLE MANAGED - postfix"
-    block: |
-      # Disable sendmail(8) tasks in favor of Postfix
-      daily_clean_hoststat_enable="NO"
-      daily_status_mail_rejects_enable="NO"
-      daily_status_include_submit_mailq="NO"
-      daily_submit_queuerun="NO"
-
-- name: postfix - enable postfix and disable sendmail
-  blockinfile:
-    path: /etc/rc.conf
-    marker: "# {mark} ANSIBLE MANAGED - postfix"
-    block: |
-      postfix_enable="YES"
-      # Completely disable sendmail(8) in favor of Postfix
-      sendmail_enable="NO"
-      sendmail_submit_enable="NO"
-      sendmail_outbound_enable="NO"
-      sendmail_msp_queue_enable="NO"
-
 - name: postfix - copy config files
   copy:
     src: "{{ item }}"
@@ -180,8 +157,31 @@
   notify: reload-postfix
   tags: postfix
 
+- name: postfix - enable postfix and disable sendmail
+  blockinfile:
+    path: /etc/rc.conf
+    marker: "# {mark} ANSIBLE MANAGED - postfix"
+    block: |
+      postfix_enable="YES"
+      # Completely disable sendmail(8) in favor of Postfix
+      sendmail_enable="NO"
+      sendmail_submit_enable="NO"
+      sendmail_outbound_enable="NO"
+      sendmail_msp_queue_enable="NO"
+
 - name: postfix - start service
   command: rcstart postfix
+
+- name: postfix - disable sendmail periodic tasks
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: "# {mark} ANSIBLE MANAGED - postfix"
+    block: |
+      # Disable sendmail(8) tasks in favor of Postfix
+      daily_clean_hoststat_enable="NO"
+      daily_status_mail_rejects_enable="NO"
+      daily_status_include_submit_mailq="NO"
+      daily_submit_queuerun="NO"
 
 - name: acme - add mail services to deploy
   blockinfile:
