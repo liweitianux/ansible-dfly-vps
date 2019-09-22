@@ -84,6 +84,3 @@
 
 - name: enable and start uwsgi
   command: rcenable uwsgi
-
-- name: start radicale
-  command: service uwsgi start radicale
