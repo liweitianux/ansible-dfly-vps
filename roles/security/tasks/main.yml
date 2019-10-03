@@ -27,4 +27,4 @@
     user: root
     minute: "0"
     hour: "*/2"  # every 2 hours
-    job: "pfctl -t bruteforce -T expire 86400 >/dev/null"
+    job: "pfctl -t bruteforce -T expire 86400 >/dev/null 2>&1"
