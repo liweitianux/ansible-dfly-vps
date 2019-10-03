@@ -113,6 +113,16 @@ Extensions
 
 Usages
 ------
+* Bootstrap the remote host:
+
+    ```
+    $ sh bootstrap.sh
+    ```
+
+  **NOTE**:
+  The remote host should be configured to allow SSH `root` login,
+  which will be disabled later to enhance security.
+
 * Test host connection:
 
     ```
