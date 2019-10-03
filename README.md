@@ -5,7 +5,7 @@ Ansible Playbooks for Personal DragonFly BSD Server
 
 Created: 2018-02-14
 
-Ansible: 2.7.1
+Ansible: 2.7.7 (Python 3.7.3)
 
 Introduction
 ------------
