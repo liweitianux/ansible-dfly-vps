@@ -147,28 +147,27 @@
   tags: acme
 
 - name: acme.sh - generate renew script
-  copy:
+  template:
+    src: acme/renew.sh.j2
     dest: "{{ web.acme_home }}/renew.sh"
     mode: 0755
-    content: |
-      acme.sh --cron
-      sh {{ web.acme_home }}/deploy.sh
   tags: acme
 
-- name: acme.sh - install cron job to renew (1)
-  cron:
-    user: acme
-    name: MAILTO
-    env: true
-    job: root
+- name: acme.sh - set monthly task for cert renewal (1)
+  copy:
+    src: 600.acme-sh
+    dest: /etc/periodic/monthly/600.acme-sh
+    mode: 0755
   tags: acme
 
-- name: acme.sh - install cron job to renew (2)
-  cron:
-    user: acme
-    name: "acme.sh-renew"
-    special_time: monthly
-    job: "sh {{ web.acme_home }}/renew.sh"
+- name: acme.sh - set monthly task for cert renewal (2)
+  blockinfile:
+    path: /etc/periodic.conf
+    marker: '# {mark} ANSIBLE MANAGED - acme'
+    block: |
+      monthly_acme_sh_enable="YES"
+      monthly_acme_sh_renewscript="{{ web.acme_home }}/renew.sh"
+      monthly_acme_sh_deployscript="{{ web.acme_home }}/deploy.sh"
   tags: acme
 
 - block:

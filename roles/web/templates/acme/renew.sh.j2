@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Renew 'acme.sh' issued certificates.
+#
+# Aaron LI
+# 2019-10-03
+#
+
+[ $(id -u) -eq 0 ] || {
+    echo "ERROR: must be run by root!"
+    exit 1
+}
+
+su - acme \
+    -c "acme.sh --cron --log /var/log/acme.sh.log \
+        --config-home {{ web.acme_home }}/.acme.sh \
+        --cert-home {{ web.acme_home }}/certs"

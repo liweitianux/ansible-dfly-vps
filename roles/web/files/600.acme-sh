@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Monthly task to renew and deploy acme certificates.
+
+if [ -r /etc/defaults/periodic.conf ]; then
+	. /etc/defaults/periodic.conf
+	source_periodic_confs
+fi
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+case "$monthly_acme_sh_enable" in
+	[Yy][Ee][Ss])
+		echo
+		echo "Checking Let's Encrypt certificates:"
+		if [ -x "$monthly_acme_sh_renewscript" ]; then
+			echo "Renewing certificates ..."
+			$monthly_acme_sh_renewscript
+			if [ -x "$monthly_acme_sh_deployscript" ]; then
+				echo "Deploying certificates ..."
+				$monthly_acme_sh_deployscript
+			fi
+		fi
+		;;
+	*)
+		;;
+esac
