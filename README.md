@@ -153,6 +153,13 @@ Usages
     $ ansible-playbook deploy.yml -vD --tags="..."
     ```
 
+* View and edit the encrypted variables:
+
+    ```
+    $ ansible-vault view group_vars/all/vault.yml
+    $ ansible-vault edit group_vars/all/vault.yml
+    ```
+
 References
 ----------
 * Securing a Server with Ansible
