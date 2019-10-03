@@ -98,7 +98,7 @@
   lineinfile:
     path: /etc/newsyslog.conf
     regexp: '^#?/var/log/acme.sh.log'
-    line: "/var/log/acme.sh.log  acme:acme       640  90    *    @T00   Z"
+    line: "/var/log/acme.sh.log	acme:acme	640  7	   100	*     Z"
   tags: acme
 
 - name: acme.sh - generate issue script
